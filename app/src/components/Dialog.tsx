@@ -44,7 +44,7 @@ export default function Dialog({
                 }`}
         >
             <div
-                className={`bg-white rounded-2xl shadow-xl w-full max-w-sm overflow-hidden transition-all duration-200 transform ${isOpen ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-4'
+                className={`ui-surface rounded-2xl shadow-xl w-full max-w-sm overflow-hidden transition-all duration-200 transform ${isOpen ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-4'
                     }`}
             >
                 <div className="p-6 pb-2">
@@ -54,19 +54,19 @@ export default function Dialog({
                             {variant === 'danger' ? <AlertTriangle size={24} /> : <Info size={24} />}
                         </div>
                         <div>
-                            <h3 className="text-lg font-bold text-gray-900 mb-2">{title}</h3>
-                            <p className="text-sm text-gray-600 leading-relaxed">
+                            <h3 className="ui-heading text-lg font-bold mb-2">{title}</h3>
+                            <p className="ui-muted text-sm leading-relaxed">
                                 {description}
                             </p>
                         </div>
                     </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-3 p-4 bg-gray-50/50 border-t border-gray-100 mt-4">
+                <div className="flex items-center justify-end gap-3 p-4 bg-gray-50/50 dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 mt-4">
                     {type === 'confirm' && (
                         <button
                             onClick={onCancel}
-                            className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-colors"
+                            className="ui-muted px-4 py-2 text-sm font-medium hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-xl transition-colors"
                         >
                             {cancelLabel}
                         </button>

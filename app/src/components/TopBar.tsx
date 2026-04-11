@@ -2,6 +2,7 @@ import { Square, Settings2, AlertCircle, Cloud, Zap } from 'lucide-react'
 import { useState } from 'react'
 import ModelSelector from './ModelSelector'
 import ParametersPanel from './ParametersPanel'
+import ThemeToggle from './ThemeToggle'
 import { useOllamaHealth } from '../lib/hooks'
 import { useSettingsStore } from '../store/settingsStore'
 import { useChatStore } from '../store/chatStore'
@@ -21,7 +22,7 @@ export default function TopBar() {
   const { health, isLoading } = useOllamaHealth(isCloudMode ? '' : fullServerUrl)
 
   return (
-    <div className="h-12 bg-white/95 backdrop-blur-sm border-b border-gray-200/80 flex items-center justify-between px-4 gap-4 relative z-10">
+    <div className="ui-panel h-12 flex items-center justify-between px-4 gap-4 relative z-10">
       {/* Left Side - Model Selector */}
       <div className="flex items-center gap-3">
         <ModelSelector />
@@ -30,9 +31,9 @@ export default function TopBar() {
         <div className="relative">
           <button
             onClick={() => setParametersOpen(!parametersOpen)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all duration-150 border ${parametersOpen
-              ? 'bg-gray-100 text-gray-900 border-gray-200'
-              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100 border-transparent hover:border-gray-200'
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all duration-150 ${parametersOpen
+              ? 'ui-button-secondary-active'
+              : 'ui-button-secondary'
               }`}
           >
             <Settings2 size={14} />
@@ -50,9 +51,9 @@ export default function TopBar() {
       <div className="flex items-center gap-3">
         {isCloudMode ? (
           /* Cloud Mode Status */
-          <div className="flex items-center gap-2 px-2.5 py-1 bg-purple-50/80 rounded-md">
+          <div className="flex items-center gap-2 px-2.5 py-1 bg-purple-50/80 dark:bg-purple-900/30 rounded-md">
             <Cloud size={12} className="text-purple-500" />
-            <span className="text-xs font-medium text-purple-600">
+            <span className="text-xs font-medium text-purple-600 dark:text-purple-300">
               {activeProvider?.name || 'Cloud'}
             </span>
             {activeProvider?.api_key ? (
@@ -63,14 +64,14 @@ export default function TopBar() {
           </div>
         ) : (
           /* Local Mode Status */
-          <div className="flex items-center gap-2 px-2.5 py-1 bg-gray-100/80 rounded-md">
+          <div className="flex items-center gap-2 px-2.5 py-1 bg-gray-100/80 dark:bg-gray-800 rounded-md">
             <Zap size={12} className="text-blue-500" />
             {isLoading ? (
               <div className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></div>
             ) : (
               <div className={`w-1.5 h-1.5 rounded-full ${health.connected ? 'bg-green-500' : 'bg-red-500'}`}></div>
             )}
-            <span className="text-xs font-medium text-gray-600">
+            <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
               {isLoading ? 'Connecting...' : health.connected ? 'Connected' : 'Disconnected'}
             </span>
             {health.error && (
@@ -97,7 +98,9 @@ export default function TopBar() {
           </button>
         )}
 
-        <div className="text-[10px] text-gray-400 font-medium uppercase tracking-wide">
+        <ThemeToggle />
+
+        <div className="ui-muted text-[10px] font-medium uppercase tracking-wide">
           <span>Ready</span>
         </div>
       </div>

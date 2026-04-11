@@ -18,7 +18,7 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
     if (this.state.hasError) {
       return (
         <div className="p-8 max-w-3xl mx-auto">
-          <div className="bg-red-50 border border-red-200 text-red-800 rounded-2xl p-6">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-200 rounded-2xl p-6">
             <h2 className="text-xl font-semibold mb-2">Monitoring dashboard encountered an error</h2>
             <p className="text-sm opacity-80">Try reopening this tab. If it persists, please report with console logs.</p>
           </div>
@@ -57,14 +57,14 @@ function MetricCard({ title, value, subtitle, icon, color, trend }: MetricCardPr
   }
 
   return (
-    <div className={`bg-gradient-to-br ${colorClasses[color]} border rounded-2xl p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 group`}>
+    <div className={`bg-gradient-to-br ${colorClasses[color]} dark:from-gray-800 dark:to-gray-900 dark:border-gray-700 dark:text-gray-100 border rounded-2xl p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 group`}>
       <div className="flex items-start justify-between mb-4">
-        <div className={`p-3 rounded-xl bg-white/60 group-hover:bg-white/80 transition-all duration-200 ${iconColorClasses[color]}`}>
+        <div className={`p-3 rounded-xl bg-white/60 dark:bg-gray-700/80 group-hover:bg-white/80 dark:group-hover:bg-gray-700 transition-all duration-200 ${iconColorClasses[color]}`}>
           {icon}
         </div>
         {trend && (
-          <div className={`text-xs px-2 py-1 rounded-full bg-white/60 ${trend === 'up' ? 'text-green-700' :
-            trend === 'down' ? 'text-red-700' : 'text-gray-700'
+          <div className={`text-xs px-2 py-1 rounded-full bg-white/60 dark:bg-gray-700/80 ${trend === 'up' ? 'text-green-700 dark:text-green-300' :
+            trend === 'down' ? 'text-red-700 dark:text-red-300' : 'text-gray-700 dark:text-gray-300'
             }`}>
             {trend === 'up' ? '↗' : trend === 'down' ? '↘' : '→'} {trend}
           </div>
@@ -72,10 +72,10 @@ function MetricCard({ title, value, subtitle, icon, color, trend }: MetricCardPr
       </div>
 
       <div className="space-y-2">
-        <h3 className="text-sm font-semibold text-gray-700">{title}</h3>
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200">{title}</h3>
         <div className="text-2xl font-bold">{value}</div>
         {subtitle && (
-          <p className="text-sm text-gray-600">{subtitle}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">{subtitle}</p>
         )}
       </div>
     </div>
@@ -99,7 +99,7 @@ function SimpleChart({ data, color, height = 60 }: ChartProps) {
   }
 
   if (clean.length === 0) return (
-    <div className="w-full h-full flex items-center justify-center text-xs text-gray-400">
+    <div className="w-full h-full flex items-center justify-center text-xs text-gray-400 dark:text-gray-500">
       No history yet
     </div>
   )
@@ -192,14 +192,14 @@ function MonitoringDashboardInner() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">System Monitoring</h1>
-          <p className="text-gray-600">Real-time performance and status dashboard</p>
+          <h1 className="ui-heading text-3xl font-bold mb-2">System Monitoring</h1>
+          <p className="ui-muted">Real-time performance and status dashboard</p>
         </div>
 
         <div className="flex items-center gap-4">
           <div className={`flex items-center gap-2 px-4 py-2 rounded-xl ${isMonitoring
-            ? 'bg-green-100 text-green-800 border border-green-200'
-            : 'bg-gray-100 text-gray-700 border border-gray-200'
+            ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-800'
+            : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700'
             }`}>
             <div className={`w-2 h-2 rounded-full ${isMonitoring ? 'bg-green-500 animate-pulse' : 'bg-gray-400'
               }`}></div>
@@ -222,7 +222,7 @@ function MonitoringDashboardInner() {
 
       {/* System Metrics Grid */}
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-6">System Performance</h2>
+        <h2 className="ui-heading text-xl font-semibold mb-6">System Performance</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <MetricCard
             title="CPU Usage"
@@ -273,12 +273,12 @@ function MonitoringDashboardInner() {
       {/* Running Models (Ollama PS) */}
       {runningModels.length > 0 && (
         <div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">Running Models</h2>
+          <h2 className="ui-heading text-xl font-semibold mb-6">Running Models</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {runningModels.map((model) => (
-              <div key={model.name} className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm border-l-4 border-l-green-500">
+              <div key={model.name} className="ui-card border-l-4 border-l-green-500">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold text-gray-900 truncate" title={model.name}>{model.name}</h3>
+                  <h3 className="ui-heading text-lg font-semibold truncate" title={model.name}>{model.name}</h3>
                   <button
                     onClick={() => stopModel(model.name)}
                     className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
@@ -290,20 +290,20 @@ function MonitoringDashboardInner() {
 
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Size</span>
-                    <span className="font-medium text-gray-900">{formatBytes(model.size)}</span>
+                    <span className="ui-muted">Size</span>
+                    <span className="font-medium ui-heading">{formatBytes(model.size)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">VRAM</span>
-                    <span className="font-medium text-gray-900">{formatBytes(model.size_vram)}</span>
+                    <span className="ui-muted">VRAM</span>
+                    <span className="font-medium ui-heading">{formatBytes(model.size_vram)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Format</span>
-                    <span className="font-medium text-gray-900">{model.details.format} ({model.details.quantization_level})</span>
+                    <span className="ui-muted">Format</span>
+                    <span className="font-medium ui-heading">{model.details.format} ({model.details.quantization_level})</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Family</span>
-                    <span className="font-medium text-gray-900">{model.details.family}</span>
+                    <span className="ui-muted">Family</span>
+                    <span className="font-medium ui-heading">{model.details.family}</span>
                   </div>
                 </div>
               </div>
@@ -314,10 +314,10 @@ function MonitoringDashboardInner() {
 
       {/* Performance Charts */}
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-6">Performance History</h2>
+        <h2 className="ui-heading text-xl font-semibold mb-6">Performance History</h2>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">CPU Usage Over Time</h3>
+          <div className="ui-card">
+            <h3 className="ui-heading text-lg font-semibold mb-4">CPU Usage Over Time</h3>
             <SimpleChart
               data={systemMetrics
                 .map((m) => (Number.isFinite(m.cpuUsage) ? (m.cpuUsage as number) : NaN))
@@ -327,8 +327,8 @@ function MonitoringDashboardInner() {
             />
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Memory Usage Over Time</h3>
+          <div className="ui-card">
+            <h3 className="ui-heading text-lg font-semibold mb-4">Memory Usage Over Time</h3>
             <SimpleChart
               data={systemMetrics
                 .map((m) => (m.memoryTotal > 0 && Number.isFinite(m.memoryUsage) && Number.isFinite(m.memoryTotal)
@@ -348,7 +348,7 @@ function MonitoringDashboardInner() {
           <h2 className="text-xl font-semibold text-gray-900 mb-6">Model Performance</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {Object.entries(currentModelMetrics).map(([modelName, metrics]) => (
-              <div key={modelName} className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+              <div key={modelName} className="ui-card">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="w-3 h-3 bg-gradient-to-br from-amber-500 to-orange-500 rounded-full"></div>
                   <h3 className="text-lg font-semibold text-gray-900 truncate">{modelName}</h3>
@@ -397,38 +397,38 @@ function MonitoringDashboardInner() {
       {/* Ollama Server Details */}
       {ollamaStatus && (
         <div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">Ollama Server</h2>
-          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+          <h2 className="ui-heading text-xl font-semibold mb-6">Ollama Server</h2>
+          <div className="ui-card">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2">Version</h4>
-                <p className="text-lg font-bold text-gray-900">{ollamaStatus.version}</p>
+                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Version</h4>
+                <p className="text-lg font-bold ui-heading">{ollamaStatus.version}</p>
               </div>
 
               <div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2">Uptime</h4>
-                <p className="text-lg font-bold text-gray-900">{formatUptime(ollamaStatus.uptime)}</p>
+                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Uptime</h4>
+                <p className="text-lg font-bold ui-heading">{formatUptime(ollamaStatus.uptime)}</p>
               </div>
 
               <div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2">Active Streams</h4>
-                <p className="text-lg font-bold text-gray-900">{runningModels.length}</p>
+                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Active Streams</h4>
+                <p className="text-lg font-bold ui-heading">{runningModels.length}</p>
               </div>
 
               <div>
-                <h4 className="text-sm font-semibold text-gray-700 mb-2">Queue Length</h4>
-                <p className="text-lg font-bold text-gray-900">{ollamaStatus.queueLength}</p>
+                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Queue Length</h4>
+                <p className="text-lg font-bold ui-heading">{ollamaStatus.queueLength}</p>
               </div>
             </div>
 
             {ollamaStatus.modelsLoaded && ollamaStatus.modelsLoaded.length > 0 && (
-              <div className="mt-6 pt-6 border-t border-gray-100">
-                <h4 className="text-sm font-semibold text-gray-700 mb-3">Loaded Models</h4>
+              <div className="mt-6 pt-6 border-t border-gray-100 dark:border-gray-700">
+                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Loaded Models</h4>
                 <div className="flex flex-wrap gap-2">
                   {ollamaStatus.modelsLoaded.map(model => (
                     <span
                       key={model}
-                      className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-lg font-medium"
+                      className="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-sm rounded-lg font-medium"
                     >
                       {model}
                     </span>

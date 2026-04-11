@@ -19,18 +19,18 @@ function ThoughtDropdown({ content }: { content: string }) {
   if (!content.trim()) return null
 
   return (
-    <div className="mb-4 border border-gray-200 rounded-lg overflow-hidden">
+    <div className="mb-4 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+        className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left"
       >
-        {isOpen ? <ChevronDown size={16} className="text-gray-500" /> : <ChevronRight size={16} className="text-gray-500" />}
+        {isOpen ? <ChevronDown size={16} className="text-gray-500 dark:text-gray-400" /> : <ChevronRight size={16} className="text-gray-500 dark:text-gray-400" />}
         <Brain size={16} className="text-violet-500" />
-        <span className="text-sm font-medium text-gray-700">Thought Process</span>
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Thought Process</span>
       </button>
 
       {isOpen && (
-        <div className="p-4 bg-gray-50/50 border-t border-gray-200 text-sm text-gray-600 leading-relaxed font-mono whitespace-pre-wrap">
+        <div className="p-4 bg-gray-50/50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 text-sm text-gray-600 dark:text-gray-300 leading-relaxed font-mono whitespace-pre-wrap">
           {content}
         </div>
       )}
@@ -42,19 +42,19 @@ function FileDropdown({ name, content }: { name: string, content: string }) {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
-    <div className="mb-4 border border-gray-200 rounded-lg overflow-hidden">
+    <div className="mb-4 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 transition-colors text-left"
+        className="w-full flex items-center gap-2 px-4 py-2 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-left"
       >
-        {isOpen ? <ChevronDown size={16} className="text-gray-500" /> : <ChevronRight size={16} className="text-gray-500" />}
+        {isOpen ? <ChevronDown size={16} className="text-gray-500 dark:text-gray-400" /> : <ChevronRight size={16} className="text-gray-500 dark:text-gray-400" />}
         <FileText size={16} className="text-blue-500" />
-        <span className="text-sm font-medium text-gray-700">File Context: {name}</span>
-        <span className="ml-auto text-xs text-gray-400">{content.length} chars</span>
+        <span className="text-sm font-medium text-gray-700 dark:text-gray-200">File Context: {name}</span>
+        <span className="ml-auto text-xs text-gray-400 dark:text-gray-500">{content.length} chars</span>
       </button>
 
       {isOpen && (
-        <div className="p-4 bg-gray-50/50 border-t border-gray-200 text-sm text-gray-600 leading-relaxed font-mono whitespace-pre-wrap max-h-96 overflow-y-auto">
+        <div className="p-4 bg-gray-50/50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 text-sm text-gray-600 dark:text-gray-300 leading-relaxed font-mono whitespace-pre-wrap max-h-96 overflow-y-auto">
           {content}
         </div>
       )}
@@ -68,7 +68,7 @@ const markdownComponents: any = {
     const { inline, className, children, ...props } = codeProps
     if (inline) {
       return (
-        <code className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-900 font-mono text-sm" {...props}>
+        <code className="px-1.5 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 font-mono text-sm" {...props}>
           {children}
         </code>
       )
@@ -104,31 +104,31 @@ const markdownComponents: any = {
   },
   a({ children, ...props }: any) {
     return (
-      <a className="text-blue-600 hover:text-blue-700 hover:underline" target="_blank" rel="noreferrer" {...props}>
+      <a className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:underline" target="_blank" rel="noreferrer" {...props}>
         {children}
       </a>
     )
   },
   table({ children }: any) {
     return (
-      <div className="overflow-x-auto my-4 border border-gray-200 rounded-lg shadow-sm max-w-full">
-        <table className="w-full divide-y divide-gray-200 text-sm table-fixed">
+      <div className="overflow-x-auto my-4 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm max-w-full">
+        <table className="w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm table-fixed">
           {children}
         </table>
       </div>
     )
   },
   thead({ children }: any) {
-    return <thead className="bg-gray-50">{children}</thead>
+    return <thead className="bg-gray-50 dark:bg-gray-800">{children}</thead>
   },
   th({ children }: any) {
-    return <th className="px-4 py-2 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider break-words">{children}</th>
+    return <th className="px-4 py-2 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider break-words">{children}</th>
   },
   td({ children }: any) {
-    return <td className="px-4 py-3 text-gray-500 border-t border-gray-100 break-words whitespace-normal">{children}</td>
+    return <td className="px-4 py-3 text-gray-500 dark:text-gray-300 border-t border-gray-100 dark:border-gray-700 break-words whitespace-normal">{children}</td>
   },
   blockquote({ children }: any) {
-    return <blockquote className="border-l-4 border-gray-200 pl-4 py-1 my-4 italic text-gray-600">{children}</blockquote>
+    return <blockquote className="border-l-4 border-gray-200 dark:border-gray-700 pl-4 py-1 my-4 italic text-gray-600 dark:text-gray-300">{children}</blockquote>
   }
 }
 
@@ -193,7 +193,7 @@ function Markdown({ content, isStreaming }: Props) {
         <FileDropdown key={i} name={f.name} content={f.content} />
       ))}
 
-      <div className="prose prose-base max-w-none text-gray-900 leading-relaxed">
+      <div className="prose prose-base max-w-none leading-relaxed dark:prose-invert prose-p:text-gray-700 dark:prose-p:text-gray-300 prose-headings:text-gray-900 dark:prose-headings:text-gray-100 prose-strong:text-gray-900 dark:prose-strong:text-gray-100 prose-li:text-gray-700 dark:prose-li:text-gray-300 prose-ol:pl-6 prose-ul:pl-6 prose-li:marker:text-gray-400 dark:prose-li:marker:text-gray-500">
         <ReactMarkdown
           remarkPlugins={activeRemarkPlugins}
           rehypePlugins={activeRehypePlugins}

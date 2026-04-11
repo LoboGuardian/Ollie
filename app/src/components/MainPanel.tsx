@@ -149,7 +149,7 @@ export default function MainPanel() {
   const hasMessages = messages.length > 0
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 overflow-hidden bg-white relative">
+    <div className="flex-1 flex flex-col min-h-0 overflow-hidden bg-white dark:bg-gray-900 relative">
       {/* Chat Messages Area */}
       <div
         ref={containerRef}
@@ -165,11 +165,11 @@ export default function MainPanel() {
                 <img src="/ollie-logo.png" alt="Ollie Logo" className="w-full h-full object-contain" />
               </div>
 
-              <h1 className="text-3xl font-bold text-gray-900 mb-4">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-4">
                 How can I help you today?
               </h1>
 
-              <p className="text-gray-600 mb-12 text-lg max-w-2xl mx-auto">
+              <p className="text-gray-600 dark:text-gray-400 mb-12 text-lg max-w-2xl mx-auto">
                 {currentModel
                   ? `I'm ready to chat using ${currentModel}. Ask me anything, and I'll do my best to help!`
                   : 'Select a model from the dropdown above to start chatting'
@@ -180,7 +180,7 @@ export default function MainPanel() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
                 <button
                   onClick={() => setMessage('Explain how this code works')}
-                  className="p-5 bg-white border border-gray-200 hover:border-gray-300 rounded-xl text-left transition-all duration-200 group hover:shadow-md"
+                  className="ui-surface p-5 hover:border-gray-300 dark:hover:border-gray-600 rounded-xl text-left transition-all duration-200 group hover:shadow-md"
                   disabled={!currentModel}
                 >
                   <div className="flex items-start gap-4">
@@ -188,15 +188,15 @@ export default function MainPanel() {
                       <FileText size={20} />
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-900 mb-1">Explain code</h3>
-                      <p className="text-sm text-gray-500">Understand functions & algorithms</p>
+                      <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-1">Explain code</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Understand functions & algorithms</p>
                     </div>
                   </div>
                 </button>
 
                 <button
                   onClick={() => setMessage('Write a professional email')}
-                  className="p-5 bg-white border border-gray-200 hover:border-gray-300 rounded-xl text-left transition-all duration-200 group hover:shadow-md"
+                  className="ui-surface p-5 hover:border-gray-300 dark:hover:border-gray-600 rounded-xl text-left transition-all duration-200 group hover:shadow-md"
                   disabled={!currentModel}
                 >
                   <div className="flex items-start gap-4">
@@ -204,15 +204,15 @@ export default function MainPanel() {
                       <FileText size={20} />
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-900 mb-1">Write content</h3>
-                      <p className="text-sm text-gray-500">Draft emails & documents</p>
+                      <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-1">Write content</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Draft emails & documents</p>
                     </div>
                   </div>
                 </button>
 
                 <button
                   onClick={() => setMessage('Help me analyze this data')}
-                  className="p-5 bg-white border border-gray-200 hover:border-gray-300 rounded-xl text-left transition-all duration-200 group hover:shadow-md"
+                  className="ui-surface p-5 hover:border-gray-300 dark:hover:border-gray-600 rounded-xl text-left transition-all duration-200 group hover:shadow-md"
                   disabled={!currentModel}
                 >
                   <div className="flex items-start gap-4">
@@ -220,15 +220,15 @@ export default function MainPanel() {
                       <Search size={20} />
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-900 mb-1">Analyze data</h3>
-                      <p className="text-sm text-gray-500">Find patterns & insights</p>
+                      <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-1">Analyze data</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Find patterns & insights</p>
                     </div>
                   </div>
                 </button>
 
                 <button
                   onClick={() => setMessage('What is machine learning?')}
-                  className="p-5 bg-white border border-gray-200 hover:border-gray-300 rounded-xl text-left transition-all duration-200 group hover:shadow-md"
+                  className="ui-surface p-5 hover:border-gray-300 dark:hover:border-gray-600 rounded-xl text-left transition-all duration-200 group hover:shadow-md"
                   disabled={!currentModel}
                 >
                   <div className="flex items-start gap-4">
@@ -236,8 +236,8 @@ export default function MainPanel() {
                       <Brain size={20} />
                     </div>
                     <div>
-                      <h3 className="font-medium text-gray-900 mb-1">Answer questions</h3>
-                      <p className="text-sm text-gray-500">Detailed explanations</p>
+                      <h3 className="font-medium text-gray-900 dark:text-gray-100 mb-1">Answer questions</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">Detailed explanations</p>
                     </div>
                   </div>
                 </button>
@@ -261,7 +261,7 @@ export default function MainPanel() {
       {showScrollButton && (
         <button
           onClick={() => scrollToBottom()}
-          className="absolute bottom-32 left-1/2 transform -translate-x-1/2 bg-white border border-gray-200 text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-full p-2 shadow-lg transition-all z-10 flex items-center gap-2 px-4"
+          className="ui-surface absolute bottom-32 left-1/2 transform -translate-x-1/2 ui-muted hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-full p-2 shadow-lg transition-all z-10 flex items-center gap-2 px-4"
         >
           <ArrowDown size={16} />
           <span className="text-sm font-medium">Scroll to bottom</span>
@@ -269,7 +269,7 @@ export default function MainPanel() {
       )}
 
       {/* Input Area - constrained to max 40% of height */}
-      <div className="border-t border-gray-100 bg-gray-50/50 backdrop-blur-sm flex-shrink-0 max-h-[40vh] overflow-y-auto">
+      <div className="border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-950/80 backdrop-blur-sm flex-shrink-0 max-h-[40vh] overflow-y-auto">
         <div className="w-full max-w-3xl mx-auto p-4 sm:p-6">
           <div className="relative">
             {/* Attachment Preview Area */}
@@ -277,16 +277,16 @@ export default function MainPanel() {
               <div className="flex gap-3 mb-3 overflow-x-auto pb-2">
                 {attachments.map((att, i) => (
                   <div key={i} className="relative group flex-shrink-0">
-                    <div className="w-16 h-16 rounded-xl border border-gray-200 overflow-hidden bg-gray-50 flex items-center justify-center">
+                    <div className="ui-surface w-16 h-16 rounded-xl overflow-hidden flex items-center justify-center">
                       {att.type === 'image' ? (
                         <img src={att.preview} alt={att.name} className="w-full h-full object-cover" />
                       ) : (
-                        <FileText size={24} className="text-gray-400" />
+                        <FileText size={24} className="text-gray-400 dark:text-gray-500" />
                       )}
                     </div>
                     <button
                       onClick={() => removeAttachment(i)}
-                      className="absolute -top-1.5 -right-1.5 p-1 bg-white rounded-full shadow-md border border-gray-200 hover:bg-red-50 hover:text-red-500 transition-colors"
+                      className="ui-surface absolute -top-1.5 -right-1.5 p-1 rounded-full shadow-md hover:bg-red-50 dark:hover:bg-red-950/40 hover:text-red-500 transition-colors"
                     >
                       <X size={12} />
                     </button>
@@ -299,9 +299,9 @@ export default function MainPanel() {
             )}
 
             {/* Enhanced Floating Input Bar */}
-            <div className="flex items-end gap-2 bg-white border border-gray-200/60 rounded-[26px] p-2 shadow-[0_8px_30px_rgb(0,0,0,0.12)] focus-within:ring-2 focus-within:ring-gray-900/5 focus-within:border-gray-300 transition-all duration-300">
+            <div className="ui-surface flex items-end gap-2 rounded-[26px] p-2 shadow-[0_8px_30px_rgb(0,0,0,0.12)] focus-within:ring-2 focus-within:ring-gray-900/5 dark:focus-within:ring-white/10 focus-within:border-gray-300 dark:focus-within:border-gray-600 transition-all duration-300">
               <button
-                className="p-2 mb-1.5 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
+                className="ui-muted p-2 mb-1.5 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition-colors"
                 title="Attach image or file"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={!currentModel || isStreaming}
@@ -323,7 +323,7 @@ export default function MainPanel() {
                   onKeyDown={handleKeyDown}
                   onInput={handleInput}
                   placeholder={currentModel ? "Message Ollie..." : "Select a model to start chatting"}
-                  className="w-full resize-none bg-transparent focus:outline-none text-gray-900 placeholder-gray-400 text-[15px] leading-6 max-h-[200px]"
+                  className="w-full resize-none bg-transparent focus:outline-none text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder:text-gray-500 text-[15px] leading-6 max-h-[200px]"
                   style={{ minHeight: '24px' }}
                   rows={1}
                   disabled={!currentModel || isStreaming}
@@ -334,7 +334,7 @@ export default function MainPanel() {
                   ? 'bg-red-600 hover:bg-red-700 text-white shadow-lg'
                   : (message.trim() || attachments.length > 0) && currentModel
                     ? 'bg-gray-900 hover:bg-gray-800 text-white shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
-                    : 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                    : 'bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-500 cursor-not-allowed'
                   }`}
                 disabled={!currentModel && !isStreaming}
                 onClick={isStreaming ? handleStopStreaming : handleSendMessage}
@@ -349,7 +349,7 @@ export default function MainPanel() {
           </div>
 
           <div className="flex justify-center mt-3 mb-2">
-            <p className="text-[11px] text-gray-400 font-medium tracking-wide">
+            <p className="text-[11px] text-gray-400 dark:text-gray-500 font-medium tracking-wide">
               {currentModel
                 ? 'Ollie can make mistakes. Consider checking important information.'
                 : 'Select a model to start chatting'

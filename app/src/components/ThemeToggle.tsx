@@ -1,41 +1,17 @@
 import { Moon, Sun } from 'lucide-react'
 import { useSettingsStore } from '../store/settingsStore'
-import { useEffect } from 'react'
 
 export default function ThemeToggle() {
-  const { theme, setTheme } = useSettingsStore()
+  const { theme, setTheme, saveSettingsToBackend } = useSettingsStore()
 
-  useEffect(() => {
-    // Handle system theme preference
-    if (theme === 'system') {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-      const handleChange = () => {
-        if (mediaQuery.matches) {
-          document.documentElement.classList.add('dark')
-        } else {
-          document.documentElement.classList.remove('dark')
-        }
-      }
-      
-      handleChange()
-      mediaQuery.addListener(handleChange)
-      
-      return () => mediaQuery.removeListener(handleChange)
-    } else {
-      // Apply theme directly
-      if (theme === 'dark') {
-        document.documentElement.classList.add('dark')
-      } else {
-        document.documentElement.classList.remove('dark')
-      }
-    }
-  }, [theme])
+  const toggleTheme = async () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark'
+    setTheme(nextTheme)
 
-  const toggleTheme = () => {
-    if (theme === 'light') {
-      setTheme('dark')
-    } else {
-      setTheme('light')
+    try {
+      await saveSettingsToBackend()
+    } catch (error) {
+      console.error('Failed to save theme setting', error)
     }
   }
 

@@ -35,24 +35,24 @@ export default function TitleBar() {
     const close = () => appWindow.close()
 
     return (
-        <div data-tauri-drag-region className="h-8 bg-white/95 backdrop-blur-sm border-b border-gray-200/80 flex items-center justify-between select-none fixed top-0 left-0 right-0 z-50">
+        <div data-tauri-drag-region className="h-8 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-200/80 dark:border-gray-800 flex items-center justify-between select-none fixed top-0 left-0 right-0 z-50">
             {/* Title / Drag Area */}
             <div className="flex-1 h-full flex items-center px-4" data-tauri-drag-region>
-                <span className="text-[11px] font-medium text-gray-400 pointer-events-none tracking-wide uppercase">Ollie</span>
+                <span className="text-[11px] font-medium text-gray-400 dark:text-gray-500 pointer-events-none tracking-wide uppercase">Ollie</span>
             </div>
 
             {/* Window Controls */}
             <div className="flex h-full">
                 <button
                     onClick={minimize}
-                    className="h-full w-11 flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-all duration-150 focus:outline-none"
+                    className="h-full w-11 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-600 dark:hover:text-gray-300 transition-all duration-150 focus:outline-none"
                     tabIndex={-1}
                 >
                     <Minus size={12} strokeWidth={1.5} />
                 </button>
                 <button
                     onClick={toggleMaximize}
-                    className="h-full w-11 flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-all duration-150 focus:outline-none"
+                    className="h-full w-11 flex items-center justify-center text-gray-400 dark:text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-600 dark:hover:text-gray-300 transition-all duration-150 focus:outline-none"
                     tabIndex={-1}
                 >
                     {isMaximized ? <Square size={10} fill="currentColor" className="opacity-60" /> : <Maximize2 size={11} strokeWidth={1.5} />}

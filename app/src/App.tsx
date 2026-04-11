@@ -16,7 +16,7 @@ import TitleBar from './components/TitleBar.tsx'
 function App() {
   const { view } = useUIStore()
   const { monitoringEnabled, isMonitoring, startMonitoring } = useMonitoringStore()
-  const { loadSettingsFromBackend } = useSettingsStore()
+  const { theme, loadSettingsFromBackend } = useSettingsStore()
 
   // Load settings on mount
   useEffect(() => {
@@ -30,8 +30,22 @@ function App() {
     }
   }, [monitoringEnabled, isMonitoring, startMonitoring])
 
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+
+    const applyTheme = () => {
+      const isDark = theme === 'dark' || (theme === 'system' && mediaQuery.matches)
+      document.documentElement.classList.toggle('dark', isDark)
+    }
+
+    applyTheme()
+    mediaQuery.addEventListener('change', applyTheme)
+
+    return () => mediaQuery.removeEventListener('change', applyTheme)
+  }, [theme])
+
   return (
-    <div className="flex h-screen bg-gray-50 text-gray-900 overflow-hidden pt-8">
+    <div className="flex h-screen bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100 overflow-hidden pt-8">
       <TitleBar />
       {/* Left Sidebar */}
       <Sidebar />
@@ -40,9 +54,9 @@ function App() {
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         <TopBar />
         {view === 'chat' && <MainPanel />}
-        {view === 'models' && <div className="flex-1 overflow-auto bg-white"><ModelsRoute /></div>}
-        {view === 'settings' && <div className="flex-1 overflow-auto bg-white"><SettingsRoute /></div>}
-        {view === 'monitoring' && <div className="flex-1 overflow-auto bg-gray-50"><MonitoringDashboard /></div>}
+        {view === 'models' && <div className="flex-1 overflow-auto bg-white dark:bg-gray-900"><ModelsRoute /></div>}
+        {view === 'settings' && <div className="flex-1 overflow-auto bg-white dark:bg-gray-900"><SettingsRoute /></div>}
+        {view === 'monitoring' && <div className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-950"><MonitoringDashboard /></div>}
       </div>
 
       {/* Mode Selection Wizard */}

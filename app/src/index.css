@@ -1,5 +1,88 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer components {
+	.ui-surface {
+		@apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700;
+	}
+
+	.ui-surface-subtle {
+		@apply bg-gray-50/80 dark:bg-gray-900 border border-gray-200/80 dark:border-gray-800;
+	}
+
+	.ui-card {
+		@apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-6 shadow-sm;
+	}
+
+	.ui-panel {
+		@apply bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-200/80 dark:border-gray-800;
+	}
+
+	.ui-input {
+		@apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-900 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 focus:outline-none;
+	}
+
+	.ui-input-focus {
+		@apply focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-500 focus:border-gray-400 dark:focus:border-gray-600;
+	}
+
+	.ui-button-secondary {
+		@apply text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 border border-transparent hover:border-gray-200 dark:hover:border-gray-700;
+	}
+
+	.ui-button-secondary-active {
+		@apply bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-gray-700;
+	}
+
+	.ui-button-primary {
+		@apply bg-gray-900 hover:bg-gray-800 text-white shadow-sm;
+	}
+
+	.ui-button-primary-muted {
+		@apply bg-gray-900 hover:bg-gray-800 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border dark:border-gray-700 text-white shadow-sm;
+	}
+
+	.ui-icon-button {
+		@apply p-2.5 rounded-xl transition-all duration-200 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700;
+	}
+
+	.ui-icon-button-danger {
+		@apply p-2.5 rounded-xl transition-all duration-200 text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 dark:hover:text-red-300;
+	}
+
+	.ui-dropdown {
+		@apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg;
+	}
+
+	.ui-dropdown-item {
+		@apply hover:bg-gray-50 dark:hover:bg-gray-700;
+	}
+
+	.ui-muted {
+		@apply text-gray-500 dark:text-gray-400;
+	}
+
+	.ui-heading {
+		@apply text-gray-900 dark:text-gray-100;
+	}
+
+	.ui-label {
+		@apply block text-sm font-semibold text-gray-900 dark:text-gray-100;
+	}
+
+	.ui-subheading {
+		@apply text-sm font-semibold text-gray-700 dark:text-gray-300;
+	}
+
+	.ui-chip {
+		@apply text-xs text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-lg;
+	}
+
+	.ui-chip-sm {
+		@apply text-[10px] px-1.5 py-0.5 rounded font-medium bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300;
+	}
+}
 
 /* Typography tweaks for markdown */
 
@@ -22,6 +105,21 @@
 .markdown-body h2,
 .markdown-body h3 {
 	color: #111827;
+}
+
+.dark .markdown-body h1,
+.dark .markdown-body h2,
+.dark .markdown-body h3 {
+	color: #f3f4f6;
+}
+
+.markdown-body strong {
+	color: #111827;
+	font-weight: 700;
+}
+
+.dark .markdown-body strong {
+	color: #f9fafb;
 }
 
 /* Prevent any markdown content from breaking container width */
@@ -63,6 +161,15 @@
 .prose pre {
 	max-width: 100%;
 	overflow-x: auto;
+}
+
+.prose ol,
+.prose ul {
+	padding-left: 1.5rem;
+}
+
+.prose li {
+	margin: 0.375rem 0;
 }
 
 /* Ensure app uses full height with flex layouts */

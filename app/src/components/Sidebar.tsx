@@ -67,16 +67,16 @@ export default function Sidebar() {
   }, [searchQuery, chats])
 
   return (
-    <div className="w-72 bg-gray-50/50 border-r border-gray-200/80 flex flex-col overflow-hidden">
+    <div className="w-72 bg-gray-50/50 dark:bg-gray-900 border-r border-gray-200/80 dark:border-gray-800 flex flex-col overflow-hidden">
       {/* Header with Ollama Logo */}
-      <div className="p-4 border-b border-gray-200/60">
+      <div className="p-4 border-b border-gray-200/60 dark:border-gray-800">
         <div className="flex items-center gap-2.5 mb-4">
           <div className="w-8 h-8 flex items-center justify-center flex-shrink-0">
             <img src="/ollie-logo.png" alt="Ollie" className="w-full h-full object-contain" />
           </div>
           <div>
-            <h1 className="text-base font-semibold text-gray-900">Ollie</h1>
-            <p className="text-[10px] text-gray-400">AI Chat Interface</p>
+            <h1 className="ui-heading text-base font-semibold">Ollie</h1>
+            <p className="ui-muted text-[10px]">AI Chat Interface</p>
           </div>
         </div>
 
@@ -106,7 +106,7 @@ export default function Sidebar() {
               setView('chat')
             }
           }}
-          className="w-full flex items-center justify-center gap-2 px-3 py-2.5 bg-gray-900 hover:bg-gray-800 text-white rounded-lg transition-all duration-150 text-sm font-medium"
+          className="ui-button-primary-muted w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg transition-all duration-150 text-sm font-medium"
         >
           <Plus size={16} strokeWidth={2} />
           <span>New chat</span>
@@ -114,7 +114,7 @@ export default function Sidebar() {
       </div>
 
       {/* Search */}
-      <div className="px-4 py-3 border-b border-gray-200/60">
+      <div className="px-4 py-3 border-b border-gray-200/60 dark:border-gray-800">
         <div className="relative">
           <Search size={14} className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400" />
           <input
@@ -122,7 +122,7 @@ export default function Sidebar() {
             placeholder="Search..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-8 pr-3 py-2 bg-white border border-gray-200 rounded-md focus:outline-none focus:ring-1 focus:ring-gray-400 focus:border-gray-400 text-xs transition-all duration-150 placeholder:text-gray-400"
+            className="ui-input ui-input-focus w-full pl-8 pr-3 py-2 rounded-md text-xs transition-all duration-150"
           />
         </div>
       </div>
@@ -152,19 +152,19 @@ export default function Sidebar() {
                       setView('chat')
                     }}
                     className={`flex-1 min-w-0 text-left px-4 py-3 rounded-xl border transition-all duration-200 ${currentChatId === c.id
-                      ? 'bg-gray-50 border-gray-200 shadow-sm'
-                      : 'bg-white hover:bg-gray-50 border-transparent hover:border-gray-100 hover:shadow-sm'
+                      ? 'bg-gray-50 border-gray-200 shadow-sm dark:bg-gray-800 dark:border-gray-700'
+                      : 'bg-white hover:bg-gray-50 border-transparent hover:border-gray-100 hover:shadow-sm dark:bg-gray-900 dark:hover:bg-gray-800 dark:hover:border-gray-700'
                       }`}
                   >
                     <div className="flex items-center gap-3 mb-1">
                       <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0"></div>
-                      <div className="text-sm font-semibold text-gray-900 truncate">
+                      <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">
                         {c.title || 'Untitled chat'}
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2 ml-5 mb-1.5">
-                      <span className="text-[10px] font-medium px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded">
+                      <span className="ui-chip-sm">
                         {c.model || 'Unknown model'}
                       </span>
                       <span className="text-[10px] text-gray-400">
