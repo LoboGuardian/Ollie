@@ -12,6 +12,7 @@ import { useMonitoringStore } from './store/monitoringStore'
 import { useSettingsStore } from './store/settingsStore'
 import { useEffect } from 'react'
 import TitleBar from './components/TitleBar.tsx'
+import { getCurrentWindow } from '@tauri-apps/api/window'
 
 function App() {
   const { view } = useUIStore()
@@ -31,17 +32,23 @@ function App() {
   }, [monitoringEnabled, isMonitoring, startMonitoring])
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-
-    const applyTheme = () => {
-      const isDark = theme === 'dark' || (theme === 'system' && mediaQuery.matches)
-      document.documentElement.classList.toggle('dark', isDark)
+    if (theme !== 'system') {
+      document.documentElement.classList.toggle('dark', theme === 'dark')
+      return
     }
 
-    applyTheme()
-    mediaQuery.addEventListener('change', applyTheme)
+    let unlisten: (() => void) | undefined
+    const win = getCurrentWindow()
 
-    return () => mediaQuery.removeEventListener('change', applyTheme)
+    win.theme().then((t) => {
+      document.documentElement.classList.toggle('dark', t === 'dark')
+    })
+
+    win.onThemeChanged(({ payload }) => {
+      document.documentElement.classList.toggle('dark', payload === 'dark')
+    }).then((fn) => { unlisten = fn })
+
+    return () => { unlisten?.() }
   }, [theme])
 
   return (
