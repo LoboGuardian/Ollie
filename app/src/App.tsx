@@ -15,9 +15,10 @@ import TitleBar from './components/TitleBar.tsx'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 
 function App() {
-  const { view } = useUIStore()
+  const { view, zenMode } = useUIStore()
   const { monitoringEnabled, isMonitoring, startMonitoring } = useMonitoringStore()
   const { theme, loadSettingsFromBackend } = useSettingsStore()
+  const isZenMode = view === 'chat' && zenMode
 
   // Load settings on mount
   useEffect(() => {
@@ -54,13 +55,11 @@ function App() {
   return (
     <div className="flex h-screen bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100 overflow-hidden pt-8">
       <TitleBar />
-      {/* Left Sidebar */}
-      <Sidebar />
+      {!isZenMode && <Sidebar />}
 
-      {/* Main Content Area */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        <TopBar />
-        {view === 'chat' && <MainPanel />}
+        {!isZenMode && <TopBar />}
+        {view === 'chat' && <MainPanel isZenMode={isZenMode} />}
         {view === 'models' && <div className="flex-1 overflow-auto bg-white dark:bg-gray-900"><ModelsRoute /></div>}
         {view === 'settings' && <div className="flex-1 overflow-auto bg-white dark:bg-gray-900"><SettingsRoute /></div>}
         {view === 'monitoring' && <div className="flex-1 overflow-auto bg-gray-50 dark:bg-gray-950"><MonitoringDashboard /></div>}

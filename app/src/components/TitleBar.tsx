@@ -1,10 +1,18 @@
 import { Minus, Square, X, Maximize2 } from 'lucide-react'
 import { Window } from '@tauri-apps/api/window'
 import { useState, useEffect } from 'react'
+import { useChatStore } from '../store/chatStore'
+import { useUIStore } from '../store/uiStore'
 
 export default function TitleBar() {
     const [isMaximized, setIsMaximized] = useState(false)
     const appWindow = Window.getCurrent()
+    const { currentChatTitle, currentModel } = useChatStore()
+    const { view, zenMode } = useUIStore()
+    const isZenMode = view === 'chat' && zenMode
+    const windowLabel = isZenMode
+        ? [currentChatTitle || 'Untitled chat', currentModel || null].filter(Boolean).join(' · ')
+        : 'Ollie'
 
     useEffect(() => {
         const checkMaximized = async () => {
@@ -38,7 +46,13 @@ export default function TitleBar() {
         <div data-tauri-drag-region className="h-8 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-200/80 dark:border-gray-800 flex items-center justify-between select-none fixed top-0 left-0 right-0 z-50">
             {/* Title / Drag Area */}
             <div className="flex-1 h-full flex items-center px-4" data-tauri-drag-region>
-                <span className="text-[11px] font-medium text-gray-400 dark:text-gray-500 pointer-events-none tracking-wide uppercase">Ollie</span>
+                <span className={`pointer-events-none truncate ${isZenMode
+                    ? 'text-xs font-medium text-gray-500 dark:text-gray-400 normal-case tracking-normal max-w-[70vw]'
+                    : 'text-[11px] font-medium text-gray-400 dark:text-gray-500 tracking-wide uppercase'
+                    }`}
+                >
+                    {windowLabel}
+                </span>
             </div>
 
             {/* Window Controls */}

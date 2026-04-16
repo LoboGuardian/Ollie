@@ -1,4 +1,4 @@
-import { Square, Settings2, AlertCircle, Cloud, Zap } from 'lucide-react'
+import { Square, Settings2, AlertCircle, Cloud, Zap, Maximize2 } from 'lucide-react'
 import { useState } from 'react'
 import ModelSelector from './ModelSelector'
 import ParametersPanel from './ParametersPanel'
@@ -6,10 +6,12 @@ import ThemeToggle from './ThemeToggle'
 import { useOllamaHealth } from '../lib/hooks'
 import { useSettingsStore } from '../store/settingsStore'
 import { useChatStore } from '../store/chatStore'
+import { useUIStore } from '../store/uiStore'
 
 export default function TopBar() {
   const { serverUrl, serverPort, appMode, providers, activeProviderId } = useSettingsStore()
   const { isStreaming, stopStreaming } = useChatStore()
+  const { view, zenMode, toggleZenMode } = useUIStore()
   const [parametersOpen, setParametersOpen] = useState(false)
 
   // Get active provider info
@@ -95,6 +97,20 @@ export default function TopBar() {
           >
             <Square size={12} />
             <span>Stop</span>
+          </button>
+        )}
+
+        {view === 'chat' && (
+          <button
+            onClick={toggleZenMode}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md transition-all duration-150 ${zenMode
+              ? 'ui-button-secondary-active'
+              : 'ui-button-secondary'
+              }`}
+            title={zenMode ? 'Exit zen mode' : 'Enter zen mode'}
+          >
+            <Maximize2 size={14} />
+            <span className="text-xs font-medium">Zen</span>
           </button>
         )}
 

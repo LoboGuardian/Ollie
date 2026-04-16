@@ -31,7 +31,9 @@ export interface ChatOptions {
 interface ChatState {
   messages: ChatMessage[]
   currentChatId: string | null
+  currentChatTitle: string | null
   currentModel: string
+  isLoadingChat: boolean
   isStreaming: boolean
   streamingMessageId: string | null
   currentStreamId: string | null  // Track current stream ID
@@ -40,9 +42,10 @@ interface ChatState {
   // Actions
   setCurrentModel: (model: string) => void
   setCurrentChatId: (chatId: string | null) => void
+  setCurrentChatTitle: (title: string | null) => void
   setCurrentSystemPrompt: (prompt: string | null) => void
   createNewChat: (opts?: { model?: string; systemPrompt?: string; paramsJson?: string }) => Promise<string | null>
-  loadChat: (chatId: string, systemPrompt?: string | null) => Promise<boolean>
+  loadChat: (chatId: string, systemPrompt?: string | null, title?: string | null) => Promise<boolean>
   addMessage: (message: Omit<ChatMessage, 'id' | 'timestamp'>) => string
   updateMessage: (id: string, content: string) => void
   updateStreamingMessage: (id: string, content: string) => void
@@ -59,7 +62,9 @@ interface ChatState {
 export const useChatStore = create<ChatState>((set, get) => ({
   messages: [],
   currentChatId: null,
+  currentChatTitle: null,
   currentModel: '',
+  isLoadingChat: false,
   isStreaming: false,
   streamingMessageId: null,
   currentStreamId: null,
@@ -67,6 +72,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
   setCurrentModel: (model) => set({ currentModel: model }),
   setCurrentChatId: (chatId) => set({ currentChatId: chatId }),
+  setCurrentChatTitle: (currentChatTitle) => set({ currentChatTitle }),
   setCurrentSystemPrompt: (prompt) => set({ currentSystemPrompt: prompt }),
 
   createNewChat: async (opts) => {
@@ -78,7 +84,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
       })
       const chatId = res?.id as string
       // Store the system prompt in state so we use it immediately
-      set({ currentChatId: chatId, messages: [], currentSystemPrompt: res?.system_prompt || null })
+      set({
+        currentChatId: chatId,
+        currentChatTitle: res?.title || null,
+        messages: [],
+        currentSystemPrompt: res?.system_prompt || null,
+        isLoadingChat: false,
+      })
       return chatId
     } catch (e) {
       console.error('db_create_chat failed', e)
@@ -86,13 +98,19 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
   },
 
-  loadChat: async (chatId: string, systemPrompt?: string | null) => {
+  loadChat: async (chatId: string, systemPrompt?: string | null, title?: string | null) => {
     try {
       const state = get()
       if (state.isStreaming) {
         await state.stopStreaming()
       }
-      set({ currentChatId: chatId, messages: [], currentSystemPrompt: systemPrompt || null })
+      set({
+        currentChatId: chatId,
+        currentChatTitle: title || null,
+        messages: [],
+        currentSystemPrompt: systemPrompt || null,
+        isLoadingChat: true,
+      })
       const rows = await invoke<any>('db_list_messages', { chatId, limit: 1000 })
       const msgs: ChatMessage[] = (rows as any[]).map((r) => {
         let images: string[] | undefined
@@ -113,10 +131,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
           timestamp: Number(r.created_at) || Date.now(),
         }
       })
-      set({ messages: msgs })
+      set({ messages: msgs, isLoadingChat: false })
       return true
     } catch (e) {
       console.error('db_list_messages failed', e)
+      set({ isLoadingChat: false })
       return false
     }
   },
@@ -784,7 +803,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
   },
 
   clearMessages: () => {
-    set({ messages: [], isStreaming: false, streamingMessageId: null })
+    set({ messages: [], currentChatTitle: null, isLoadingChat: false, isStreaming: false, streamingMessageId: null })
   },
 
   generateAutoTitle: async (chatId, userContent) => {
@@ -902,6 +921,9 @@ export const useChatStore = create<ChatState>((set, get) => ({
 
     if (cleanTitle) {
       await invoke('db_set_chat_title', { chatId, title: cleanTitle })
+      if (get().currentChatId === chatId) {
+        set({ currentChatTitle: cleanTitle })
+      }
       window.dispatchEvent(new CustomEvent('chats-refresh'))
     }
   }

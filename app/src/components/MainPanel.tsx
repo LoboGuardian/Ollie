@@ -1,10 +1,11 @@
-import { ArrowUp, Square, ArrowDown, Paperclip, X, FileText, Search, Brain } from 'lucide-react'
+import { ArrowUp, Square, ArrowDown, Paperclip, X, FileText, Search, Brain, Minimize2 } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { useChatStore } from '../store/chatStore'
 import Message from './Message'
 import { extractPdfText } from '../lib/pdf'
+import { useUIStore } from '../store/uiStore'
 
-export default function MainPanel() {
+export default function MainPanel({ isZenMode = false }: { isZenMode?: boolean }) {
   const [message, setMessage] = useState('')
   const [showScrollButton, setShowScrollButton] = useState(false)
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true)
@@ -18,9 +19,11 @@ export default function MainPanel() {
     messages,
     sendMessage,
     currentModel,
+    isLoadingChat,
     isStreaming,
     stopStreaming
   } = useChatStore()
+  const { setZenMode } = useUIStore()
 
   const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
     requestAnimationFrame(() => {
@@ -153,16 +156,40 @@ export default function MainPanel() {
   const hasMessages = messages.length > 0
 
   return (
-    <div className="flex-1 flex flex-col min-h-0 overflow-hidden bg-white dark:bg-gray-900 relative">
+    <div className={`flex-1 flex flex-col min-h-0 overflow-hidden relative ${isZenMode ? 'bg-gray-50 dark:bg-gray-950' : 'bg-white dark:bg-gray-900'}`}>
+      {isZenMode && (
+        <div className="absolute top-4 right-4 z-20">
+          <button
+            onClick={() => setZenMode(false)}
+            className="ui-surface ui-muted hover:text-gray-900 dark:hover:text-gray-100 rounded-xl p-2 shadow-sm transition-all"
+            title="Exit zen mode"
+          >
+            <Minimize2 size={16} />
+          </button>
+        </div>
+      )}
+
       {/* Chat Messages Area */}
       <div
         ref={containerRef}
         onScroll={handleScroll}
         className="flex-1 min-h-0 overflow-y-auto scroll-smooth"
       >
-        {!hasMessages ? (
+        {isLoadingChat ? (
+          <div className={`flex flex-col items-center justify-center h-full p-8 ${isZenMode ? 'max-w-3xl' : 'max-w-4xl'} mx-auto`}>
+            <div className="text-center w-full max-w-md">
+              <div className="w-10 h-10 mx-auto mb-5 rounded-full border-2 border-gray-200 dark:border-gray-700 border-t-gray-900 dark:border-t-gray-100 animate-spin" />
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">
+                Loading chat
+              </h2>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Fetching messages and restoring the conversation state.
+              </p>
+            </div>
+          </div>
+        ) : !hasMessages ? (
           /* Welcome Message */
-          <div className="flex flex-col items-center justify-center h-full p-8 max-w-4xl mx-auto">
+          <div className={`flex flex-col items-center justify-center h-full p-8 ${isZenMode ? 'max-w-3xl' : 'max-w-4xl'} mx-auto`}>
             <div className="text-center w-full">
               {/* Ollie Logo */}
               <div className="w-20 h-20 flex items-center justify-center mx-auto mb-8 shadow-none">
@@ -181,7 +208,8 @@ export default function MainPanel() {
               </p>
 
               {/* Quick Start Examples - Minimalist Design */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
+              {!isZenMode && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto">
                 <button
                   onClick={() => setMessage('Explain how this code works')}
                   className="ui-surface p-5 hover:border-gray-300 dark:hover:border-gray-600 rounded-xl text-left transition-all duration-200 group hover:shadow-md"
@@ -245,13 +273,14 @@ export default function MainPanel() {
                     </div>
                   </div>
                 </button>
-              </div>
+                </div>
+              )}
             </div>
           </div>
         ) : (
           /* Chat Messages */
-          <div className="w-full px-6 sm:px-8 lg:px-12 py-6 overflow-x-hidden">
-            <div className="max-w-4xl mx-auto">
+          <div className={`w-full py-6 overflow-x-hidden ${isZenMode ? 'px-4 sm:px-6 lg:px-8' : 'px-6 sm:px-8 lg:px-12'}`}>
+            <div className={`${isZenMode ? 'max-w-3xl' : 'max-w-4xl'} mx-auto`}>
               {messages.map((msg) => (
                 <Message key={msg.id} message={msg} />
               ))}
@@ -273,7 +302,7 @@ export default function MainPanel() {
       )}
 
       {/* Input Area - constrained to max 40% of height */}
-      <div className="border-t border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-950/80 backdrop-blur-sm flex-shrink-0 max-h-[40vh] overflow-y-auto">
+      <div className={`border-t flex-shrink-0 max-h-[40vh] overflow-y-auto ${isZenMode ? 'border-gray-200/80 dark:border-gray-800 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md' : 'border-gray-100 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-950/80 backdrop-blur-sm'}`}>
         <div className="w-full max-w-3xl mx-auto p-4 sm:p-6">
           <div className="relative">
             {/* Attachment Preview Area */}
@@ -352,14 +381,16 @@ export default function MainPanel() {
             </div>
           </div>
 
-          <div className="flex justify-center mt-3 mb-2">
-            <p className="text-[11px] text-gray-400 dark:text-gray-500 font-medium tracking-wide">
-              {currentModel
-                ? 'Ollie can make mistakes. Consider checking important information.'
-                : 'Select a model to start chatting'
-              }
-            </p>
-          </div>
+          {!isZenMode && (
+            <div className="flex justify-center mt-3 mb-2">
+              <p className="text-[11px] text-gray-400 dark:text-gray-500 font-medium tracking-wide">
+                {currentModel
+                  ? 'Ollie can make mistakes. Consider checking important information.'
+                  : 'Select a model to start chatting'
+                }
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
