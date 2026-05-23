@@ -2710,7 +2710,7 @@ dependencies = [
 
 [[package]]
 name = "ollie"
-version = "0.2.4"
+version = "0.2.5"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2720,7 +2720,6 @@ dependencies = [
  "futures-util",
  "lazy_static",
  "log",
- "rand 0.8.5",
  "reqwest",
  "reqwest-eventsource",
  "serde",

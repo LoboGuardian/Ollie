@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tokio::time;
-use sysinfo::System;
+use sysinfo::{Disks, Networks, System};
 use crate::commands::settings::get_ollama_url;
 
 // System metrics structure
@@ -66,16 +66,19 @@ pub async fn start_system_monitoring(
     // Spawn monitoring task
     tokio::spawn(async move {
         let mut system = System::new_all();
+        let mut disks = Disks::new_with_refreshed_list();
+        let mut networks = Networks::new_with_refreshed_list();
         let mut interval = time::interval(Duration::from_millis(chosen_interval));
-        
+
         while MONITORING_ACTIVE.load(Ordering::Relaxed) {
             interval.tick().await;
-            
-            // Refresh system information
+
             system.refresh_all();
-            
+            disks.refresh();
+            networks.refresh();
+
             // Collect system metrics
-            let metrics = collect_system_metrics(&system);
+            let metrics = collect_system_metrics(&system, &disks, &networks);
             
             // Emit system metrics event
             if let Err(e) = app.emit("monitoring:system-metrics", &metrics) {
@@ -109,39 +112,59 @@ pub async fn stop_system_monitoring() -> Result<(), String> {
 pub async fn get_system_metrics() -> Result<SystemMetrics, String> {
     let mut system = System::new_all();
     system.refresh_all();
-    Ok(collect_system_metrics(&system))
+    let mut disks = Disks::new_with_refreshed_list();
+    disks.refresh();
+    let mut networks = Networks::new_with_refreshed_list();
+    networks.refresh();
+    Ok(collect_system_metrics(&system, &disks, &networks))
 }
 
-// Get model performance metrics
+// Get model performance metrics from Ollama /api/ps (real loaded models)
 #[tauri::command]
 pub async fn get_model_metrics(model_name: Option<String>) -> Result<Vec<ModelMetrics>, String> {
-    // This would typically query a database or monitoring system
-    // For now, return mock data for demonstration
     let timestamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
         .as_secs();
-    
-    let models = if let Some(name) = model_name {
-        vec![name]
-    } else {
-        vec!["llama3:8b".to_string(), "codellama:7b".to_string()]
-    };
-    
-    let metrics: Vec<ModelMetrics> = models
-        .into_iter()
-        .map(|name| ModelMetrics {
-            model_name: name,
-            token_rate: 45.2 + (rand::random::<f32>() * 10.0),
-            response_time: 150 + (rand::random::<u64>() % 100),
-            memory_usage: 2_000_000_000 + (rand::random::<u64>() % 500_000_000),
-            active_connections: rand::random::<u32>() % 10,
-            total_requests: rand::random::<u64>() % 1000,
-            error_rate: rand::random::<f32>() * 0.05,
+
+    let base_url = get_ollama_url();
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(5))
+        .build()
+        .unwrap_or_default();
+
+    let ps: serde_json::Value = client
+        .get(format!("{}/api/ps", base_url))
+        .send()
+        .await
+        .map_err(|e| e.to_string())?
+        .json()
+        .await
+        .unwrap_or_default();
+
+    let models_json = ps["models"].as_array().cloned().unwrap_or_default();
+
+    let metrics: Vec<ModelMetrics> = models_json
+        .iter()
+        .filter(|m| {
+            if let Some(ref name) = model_name {
+                m["name"].as_str().unwrap_or("") == name
+            } else {
+                true
+            }
+        })
+        .map(|m| ModelMetrics {
+            model_name: m["name"].as_str().unwrap_or("unknown").to_string(),
+            token_rate: 0.0,
+            response_time: 0,
+            memory_usage: m["size"].as_u64().unwrap_or(0),
+            active_connections: 0,
+            total_requests: 0,
+            error_rate: 0.0,
             timestamp,
         })
         .collect();
-    
+
     Ok(metrics)
 }
 
@@ -151,38 +174,31 @@ pub async fn get_ollama_status() -> Result<OllamaStatus, String> {
     collect_ollama_status().await
 }
 
-// Helper function to collect system metrics
-fn collect_system_metrics(system: &System) -> SystemMetrics {
+fn collect_system_metrics(system: &System, disks: &Disks, networks: &Networks) -> SystemMetrics {
     let timestamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
         .as_secs();
-    
-    // CPU usage (average across all cores)
-    let cpu_usage = system.cpus().iter().map(|cpu| cpu.cpu_usage()).sum::<f32>() / system.cpus().len() as f32;
-    
-    // Memory usage (in bytes)
+
+    let cpu_count = system.cpus().len().max(1) as f32;
+    let cpu_usage = system.cpus().iter().map(|c| c.cpu_usage()).sum::<f32>() / cpu_count;
+
     let memory_usage = system.used_memory();
     let memory_total = system.total_memory();
-    
-    // For now, use mock disk and network data since sysinfo API may vary
-    // In production, you'd implement proper disk and network monitoring
-    let disk_usage = 50_000_000_000u64; // Mock 50GB used
-    let disk_total = 500_000_000_000u64; // Mock 500GB total
-    
-    let network_rx = 1024u64; // Mock network data
-    let network_tx = 512u64;
-    
-    SystemMetrics {
-        cpu_usage,
-        memory_usage,
-        memory_total,
-        disk_usage,
-        disk_total,
-        network_rx,
-        network_tx,
-        timestamp,
-    }
+
+    // Sum all mounted disks
+    let (disk_usage, disk_total) = disks.iter().fold((0u64, 0u64), |(used, total), d| {
+        let t = d.total_space();
+        let u = t.saturating_sub(d.available_space());
+        (used + u, total + t)
+    });
+
+    // Sum rx/tx across all network interfaces (bytes since last refresh)
+    let (network_rx, network_tx) = networks.iter().fold((0u64, 0u64), |(rx, tx), (_, n)| {
+        (rx + n.received(), tx + n.transmitted())
+    });
+
+    SystemMetrics { cpu_usage, memory_usage, memory_total, disk_usage, disk_total, network_rx, network_tx, timestamp }
 }
 
 // Helper function to collect Ollama status
@@ -196,7 +212,10 @@ async fn collect_ollama_status() -> Result<OllamaStatus, String> {
     let base_url = get_ollama_url();
     
     // Try to connect to Ollama API
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(5))
+        .build()
+        .unwrap_or_default();
     
     // Check if Ollama is running
     match client.get(format!("{}/api/version", base_url)).send().await {
@@ -217,12 +236,23 @@ async fn collect_ollama_status() -> Result<OllamaStatus, String> {
                 vec![]
             };
             
+            // Find ollama process start time for real uptime
+            let uptime = {
+                let mut sys = System::new();
+                sys.refresh_processes(sysinfo::ProcessesToUpdate::All, true);
+                let now_secs = timestamp;
+                let start_time = sys.processes_by_name("ollama".as_ref())
+                    .next()
+                    .map(|p| p.start_time());
+                start_time.map(|t| now_secs.saturating_sub(t)).unwrap_or(0)
+            };
+
             Ok(OllamaStatus {
                 version,
-                uptime: 3600, // Mock uptime - would need to track actual start time
+                uptime,
                 models_loaded,
-                active_streams: 0, // Would need to track active streams
-                queue_length: 0,   // Would need to track queue
+                active_streams: 0,
+                queue_length: 0,
                 server_health: "healthy".to_string(),
                 last_health_check: timestamp,
             })
@@ -301,7 +331,10 @@ pub struct OllamaPsResponse {
 #[tauri::command]
 pub async fn ollama_ps() -> Result<OllamaPsResponse, String> {
     let base_url = get_ollama_url();
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(5))
+        .build()
+        .unwrap_or_default();
     
     match client.get(format!("{}/api/ps", base_url)).send().await {
         Ok(response) => {
@@ -318,7 +351,10 @@ pub async fn ollama_ps() -> Result<OllamaPsResponse, String> {
 #[tauri::command]
 pub async fn stop_model(name: String) -> Result<(), String> {
     let base_url = get_ollama_url();
-    let client = reqwest::Client::new();
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(5))
+        .build()
+        .unwrap_or_default();
     
     // To stop a model, we send a generate request with keep_alive: 0
     // This unloads the model immediately

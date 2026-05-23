@@ -12,7 +12,7 @@ type ChatMeta = {
   model?: string | null
   system_prompt?: string | null
   title?: string | null
-  has_messages?: boolean
+  first_message?: string | null
 }
 
 export default function Sidebar() {
@@ -20,7 +20,6 @@ export default function Sidebar() {
   const [collapsedChatQuery, setCollapsedChatQuery] = useState('')
   const [collapsedChatPickerOpen, setCollapsedChatPickerOpen] = useState(false)
   const [chats, setChats] = useState<ChatMeta[]>([])
-  const [previews, setPreviews] = useState<Record<string, string>>({})
   const collapsedPickerRef = useRef<HTMLDivElement>(null)
   const { loadChat, createNewChat, currentChatId } = useChatStore()
   const { view: currentView, setView, sidebarCollapsed, setSidebarCollapsed } = useUIStore()
@@ -30,28 +29,10 @@ export default function Sidebar() {
 
   const refreshChats = async () => {
     try {
-      const rows = await invoke<ChatMeta[]>('db_list_chats_with_flags', { limit: 200 })
+      const rows = await invoke<ChatMeta[]>('db_list_chats_with_preview', { limit: 200 })
       setChats(rows)
-      const list = rows
-      const entries: Record<string, string> = {}
-      for (const c of list) {
-        try {
-          if (!c.has_messages) continue
-          const msgs = await invoke<{ content?: string }[]>('db_list_messages', { chatId: c.id, limit: 1 })
-          if (Array.isArray(msgs) && msgs.length > 0) {
-            const m = msgs[0]
-            const raw = String(m.content || '')
-            const oneLine = raw.replace(/\s+/g, ' ').trim()
-            const trimmed = oneLine.length > 80 ? `${oneLine.slice(0, 80)}…` : oneLine
-            entries[c.id] = trimmed
-          }
-        } catch {
-          // best-effort
-        }
-      }
-      setPreviews(entries)
     } catch (e) {
-      console.warn('db_list_chats failed', e)
+      console.warn('db_list_chats_with_preview failed', e)
       setChats([])
     }
   }
@@ -66,7 +47,11 @@ export default function Sidebar() {
   const filtered = useMemo(() => {
     const q = searchQuery.trim().toLowerCase()
     if (!q) return chats
-    return chats.filter(c => (c.model || '').toLowerCase().includes(q) || c.id.toLowerCase().includes(q))
+    return chats.filter(c =>
+      (c.title || '').toLowerCase().includes(q) ||
+      (c.model || '').toLowerCase().includes(q) ||
+      c.id.toLowerCase().includes(q)
+    )
   }, [searchQuery, chats])
 
   const collapsedFiltered = useMemo(() => {
@@ -224,9 +209,9 @@ export default function Sidebar() {
                                 {new Date(chat.updated_at).toLocaleDateString()}
                               </span>
                             </div>
-                            {previews[chat.id] && (
+                            {chat.first_message && (
                               <div className="ml-4 text-xs text-gray-500 truncate">
-                                {previews[chat.id]}
+                                {chat.first_message.replace(/\s+/g, ' ').slice(0, 80)}
                               </div>
                             )}
                           </button>
@@ -340,21 +325,21 @@ export default function Sidebar() {
                           </span>
                         </div>
 
-                        {previews[c.id] && (
+                        {c.first_message && (
                           <div className="text-xs text-gray-500 truncate ml-5">
-                            {previews[c.id]}
+                            {c.first_message.replace(/\s+/g, ' ').slice(0, 80)}
                           </div>
                         )}
                       </button>
                       <button
-                        title={c.has_messages ? 'Delete chat' : 'Cannot delete an empty chat'}
-                        className={`absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md transition-all duration-200 ${c.has_messages
+                        title={c.first_message ? 'Delete chat' : 'Cannot delete an empty chat'}
+                        className={`absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-md transition-all duration-200 ${c.first_message
                           ? 'text-gray-300 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 dark:hover:text-red-300'
                           : 'hidden'
                           }`}
                         onClick={(e) => {
                           e.stopPropagation()
-                          if (!c.has_messages) return
+                          if (!c.first_message) return
                           setDeleteId(c.id)
                         }}
                       >

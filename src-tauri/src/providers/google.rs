@@ -128,12 +128,16 @@ impl LLMProvider for GoogleProvider {
 
         let base_url = config.get_base_url();
         let endpoint = format!(
-            "{}/v1beta/models/{}:streamGenerateContent?alt=sse&key={}",
-            base_url, model, api_key
+            "{}/v1beta/models/{}:streamGenerateContent?alt=sse",
+            base_url, model
         );
 
         let mut headers = HeaderMap::new();
         headers.insert(CONTENT_TYPE, HeaderValue::from_static("application/json"));
+        headers.insert(
+            "x-goog-api-key",
+            HeaderValue::from_str(api_key).map_err(|_| anyhow::anyhow!("Invalid API key"))?,
+        );
 
         let (system_instruction, gemini_contents) = convert_messages(messages);
 

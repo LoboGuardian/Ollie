@@ -47,6 +47,10 @@ pub async fn get_pool() -> Result<SqlitePool, String> {
 		.execute(&pool)
 		.await
 		.map_err(|e| format!("DB pragma foreign_keys failed: {}", e))?;
+	sqlx::query("PRAGMA busy_timeout=5000;")
+		.execute(&pool)
+		.await
+		.map_err(|e| format!("DB pragma busy_timeout failed: {}", e))?;
 	sqlx::query(
 		r#"CREATE TABLE IF NOT EXISTS chats (
 			id TEXT PRIMARY KEY,

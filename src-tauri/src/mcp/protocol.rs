@@ -98,18 +98,3 @@ pub struct ClientInfo {
     pub name: String,
     pub version: String,
 }
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct InitializeResult {
-    pub protocol_version: String,
-    pub capabilities: Value,
-    pub server_info: ServerInfo,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct ServerInfo {
-    pub name: String,
-    pub version: String,
-}

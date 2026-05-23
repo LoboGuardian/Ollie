@@ -80,21 +80,6 @@ pub struct ChatMessage {
     pub tool_call_id: Option<String>,
 }
 
-/// Streaming chunk from any provider
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct StreamChunk {
-    pub content: Option<String>,
-    pub tool_calls: Option<Vec<serde_json::Value>>,
-    pub done: bool,
-    pub usage: Option<UsageStats>,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct UsageStats {
-    pub prompt_tokens: Option<i32>,
-    pub completion_tokens: Option<i32>,
-    pub total_tokens: Option<i32>,
-}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChatOptions {

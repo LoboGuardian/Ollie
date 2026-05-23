@@ -141,6 +141,34 @@ pub async fn db_list_chats_with_flags(limit: Option<i64>) -> Result<Vec<ChatWith
 	Ok(rows)
 }
 
+#[derive(Debug, Serialize, Deserialize, FromRow)]
+pub struct ChatWithPreview {
+	pub id: String,
+	pub created_at: i64,
+	pub updated_at: i64,
+	pub model: Option<String>,
+	pub system_prompt: Option<String>,
+	pub params_json: Option<String>,
+	pub title: Option<String>,
+	pub first_message: Option<String>,
+}
+
+#[tauri::command]
+pub async fn db_list_chats_with_preview(limit: Option<i64>) -> Result<Vec<ChatWithPreview>, String> {
+	let pool = get_pool().await?;
+	let l = limit.unwrap_or(200);
+	let rows = sqlx::query_as::<_, ChatWithPreview>(
+		r#"SELECT c.id, c.created_at, c.updated_at, c.model, c.system_prompt, c.params_json, c.title,
+		   (SELECT content FROM messages WHERE chat_id = c.id ORDER BY created_at ASC LIMIT 1) AS first_message
+		   FROM chats c ORDER BY c.updated_at DESC LIMIT ?"#
+	)
+	.bind(l)
+	.fetch_all(&pool)
+	.await
+	.map_err(|e| format!("list chats with preview failed: {}", e))?;
+	Ok(rows)
+}
+
 #[tauri::command]
 pub async fn db_list_messages(chat_id: String, limit: Option<i64>) -> Result<Vec<MessageRow>, String> {
 	let pool = get_pool().await?;

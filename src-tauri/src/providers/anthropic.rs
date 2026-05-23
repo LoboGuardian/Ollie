@@ -145,9 +145,16 @@ fn convert_messages(messages: &[ChatMessage]) -> (Option<String>, Vec<AnthropicM
 
         // Handle tool results
         if msg.role == "tool" {
+            let tool_use_id = match &msg.tool_call_id {
+                Some(id) if !id.is_empty() => id.clone(),
+                _ => {
+                    eprintln!("Skipping tool result message with missing tool_call_id");
+                    continue;
+                }
+            };
             let content = json!([{
                 "type": "tool_result",
-                "tool_use_id": msg.tool_call_id,
+                "tool_use_id": tool_use_id,
                 "content": msg.content
             }]);
             anthropic_messages.push(AnthropicMessage {

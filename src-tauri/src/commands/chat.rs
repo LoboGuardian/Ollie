@@ -131,18 +131,28 @@ pub async fn chat_stream(
     match result {
         Ok(_) => Ok(ChatResponse { success: true, error: None }),
         Err(e) => {
-             eprintln!("Chat error: {}", e);
-             Ok(ChatResponse { success: false, error: Some(e.to_string()) })
+            eprintln!("Chat error: {}", e);
+            Err(e.to_string())
         }
     }
 }
 
 #[tauri::command]
-pub async fn chat_cancel(stream_id: String) -> Result<(), String> {
+pub async fn chat_cancel(stream_id: Option<String>) -> Result<(), String> {
     let active_streams = ACTIVE_STREAMS.lock().await;
-    if let Some(should_cancel) = active_streams.get(&stream_id) {
-        should_cancel.store(true, std::sync::atomic::Ordering::Relaxed);
-        println!("Cancelling stream {}", stream_id);
+    match stream_id {
+        Some(sid) => {
+            if let Some(should_cancel) = active_streams.get(&sid) {
+                should_cancel.store(true, std::sync::atomic::Ordering::Release);
+                println!("Cancelling stream {}", sid);
+            }
+        }
+        None => {
+            for should_cancel in active_streams.values() {
+                should_cancel.store(true, std::sync::atomic::Ordering::Release);
+            }
+            println!("Cancelling all active streams");
+        }
     }
     Ok(())
 }

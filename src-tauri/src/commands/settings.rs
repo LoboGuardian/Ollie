@@ -109,7 +109,10 @@ pub async fn settings_get() -> Result<Settings, String> {
 pub async fn settings_set(settings: Settings) -> Result<Settings, String> {
     let path = settings_path()?;
     let content = serde_json::to_string_pretty(&settings).map_err(|e| format!("Serialize settings failed: {}", e))?;
-    fs::write(&path, content).map_err(|e| format!("Failed to write settings: {}", e))?;
+    // Write atomically: temp file in same dir + rename to avoid corrupt JSON on crash
+    let tmp_path = path.with_extension("json.tmp");
+    fs::write(&tmp_path, &content).map_err(|e| format!("Failed to write settings tmp: {}", e))?;
+    fs::rename(&tmp_path, &path).map_err(|e| format!("Failed to finalize settings: {}", e))?;
     Ok(settings)
 }
 

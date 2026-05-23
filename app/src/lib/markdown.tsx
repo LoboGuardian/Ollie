@@ -3,6 +3,7 @@ import remarkGfm from 'remark-gfm'
 import remarkMath from 'remark-math'
 import rehypeHighlight from 'rehype-highlight'
 import rehypeKatex from 'rehype-katex'
+import rehypeRaw from 'rehype-raw'
 import 'katex/dist/katex.min.css'
 import { useState, memo } from 'react'
 import { ChevronDown, ChevronRight, Brain, FileText } from 'lucide-react'
@@ -120,8 +121,8 @@ const markdownComponents: any = {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   table({ children }: any) {
     return (
-      <div className="overflow-x-auto my-4 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm max-w-full">
-        <table className="w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm table-fixed">
+      <div className="overflow-x-auto my-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+        <table className="table-auto divide-y divide-gray-200 dark:divide-gray-700 text-sm" style={{ minWidth: '100%' }}>
           {children}
         </table>
       </div>
@@ -133,11 +134,11 @@ const markdownComponents: any = {
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   th({ children }: any) {
-    return <th className="px-4 py-2 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider break-words">{children}</th>
+    return <th className="px-4 py-2 text-left text-xs font-semibold text-gray-900 dark:text-gray-100 uppercase tracking-wider whitespace-nowrap">{children}</th>
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   td({ children }: any) {
-    return <td className="px-4 py-3 text-gray-500 dark:text-gray-300 border-t border-gray-100 dark:border-gray-700 break-words whitespace-normal">{children}</td>
+    return <td className="px-4 py-3 text-gray-500 dark:text-gray-300 border-t border-gray-100 dark:border-gray-700 align-top" style={{ minWidth: '120px' }}>{children}</td>
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   blockquote({ children }: any) {
@@ -145,10 +146,10 @@ const markdownComponents: any = {
   }
 }
 
-// Full pipeline (completed messages): GFM tables + syntax highlighting + math
+// Full pipeline (completed messages): GFM tables + syntax highlighting + math + raw HTML (<br> etc.)
 const remarkPluginsFull = [remarkGfm, remarkMath]
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const rehypePluginsFull = [[rehypeHighlight, { ignoreMissing: true }] as any, rehypeKatex]
+const rehypePluginsFull = [rehypeRaw, [rehypeHighlight, { ignoreMissing: true }] as any, rehypeKatex]
 
 // Lightweight pipeline (streaming): basic markdown only — no GFM tables, no syntax highlighting
 // Headers, bold, italic, links, lists, inline code, code blocks all still render

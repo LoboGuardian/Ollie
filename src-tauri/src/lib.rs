@@ -3,7 +3,6 @@ mod db;
 mod mcp;
 mod providers;
 
-use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -34,6 +33,7 @@ pub fn run() {
       commands::db::db_set_chat_title,
       commands::db::db_set_chat_system_prompt,
       commands::db::db_list_chats_with_flags,
+      commands::db::db_list_chats_with_preview,
       commands::monitoring::start_system_monitoring,
       commands::monitoring::stop_system_monitoring,
       commands::monitoring::get_system_metrics,
@@ -60,8 +60,6 @@ pub fn run() {
             .build(),
         )?;
       }
-
-      app.manage(std::sync::Arc::new(std::sync::Mutex::new(std::collections::HashMap::<String, std::sync::Arc<std::sync::atomic::AtomicBool>>::new())));
       Ok(())
     })
     .run(tauri::generate_context!())

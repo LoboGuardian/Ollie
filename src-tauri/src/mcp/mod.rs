@@ -1,7 +1,8 @@
 use std::sync::{Arc, Mutex};
 use std::collections::HashMap;
+use std::time::Duration;
 use anyhow::Result;
-use serde_json::Value; 
+use serde_json::Value;
 use crate::mcp::protocol::{JsonRpcRequest, JsonRpcResponse, Tool, ListToolsResult, CallToolRequest, CallToolResult};
 use crate::mcp::transport::{Transport, StdioTransport, SseTransport};
 use lazy_static::lazy_static;
@@ -110,25 +111,31 @@ impl McpClient {
             transport.send(req_value).await?;
         }
 
-        loop {
-            let response_value = {
-                let mut transport = self.transport.lock().await;
-                transport.receive().await?
-            };
+        let response_fut = async {
+            loop {
+                let response_value = {
+                    let mut transport = self.transport.lock().await;
+                    transport.receive().await?
+                };
 
-            if let Some(val) = response_value {
-                if let Ok(resp) = serde_json::from_value::<JsonRpcResponse>(val.clone()) {
-                    if resp.id == Some(id) {
-                        if let Some(error) = resp.error {
-                            return Err(anyhow::anyhow!("RPC Error {}: {}", error.code, error.message));
+                if let Some(val) = response_value {
+                    if let Ok(resp) = serde_json::from_value::<JsonRpcResponse>(val.clone()) {
+                        if resp.id == Some(id) {
+                            if let Some(error) = resp.error {
+                                return Err(anyhow::anyhow!("RPC Error {}: {}", error.code, error.message));
+                            }
+                            return Ok(resp.result.unwrap_or(Value::Null));
                         }
-                        return Ok(resp.result.unwrap_or(Value::Null));
                     }
+                } else {
+                    return Err(anyhow::anyhow!("Connection closed"));
                 }
-            } else {
-                return Err(anyhow::anyhow!("Connection closed"));
             }
-        }
+        };
+
+        tokio::time::timeout(Duration::from_secs(30), response_fut)
+            .await
+            .map_err(|_| anyhow::anyhow!("MCP request timed out after 30s (method: {})", method))?
     }
 
     async fn send_notification(&self, method: &str, params: Option<Value>) -> Result<()> {

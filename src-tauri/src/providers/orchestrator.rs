@@ -46,20 +46,26 @@ impl ChatOrchestrator {
             }
             loop_count += 1;
             
-            if should_cancel.load(Ordering::Relaxed) {
+            if should_cancel.load(Ordering::Acquire) {
                  let _ = self.app.emit("chat:cancelled", serde_json::json!({"stream_id": stream_id}));
                  return Ok(());
             }
 
             // Start stream from provider
-            let mut stream = self.provider.stream_chat(config, model, &messages, tools.clone(), options.clone()).await?;
-            
+            let mut stream = match self.provider.stream_chat(config, model, &messages, tools.clone(), options.clone()).await {
+                Ok(s) => s,
+                Err(e) => {
+                    let _ = self.app.emit("chat:error", serde_json::json!({"stream_id": stream_id, "error": e.to_string()}));
+                    return Err(e);
+                }
+            };
+
             let mut full_content = String::new();
             let mut tool_calls = Vec::new();
-            
+
             while let Some(event) = stream.next().await {
-                 if should_cancel.load(Ordering::Relaxed) {
-                     break; 
+                 if should_cancel.load(Ordering::Acquire) {
+                     break;
                  }
                  
                  match event {
@@ -85,7 +91,7 @@ impl ChatOrchestrator {
                  }
             }
             
-            if should_cancel.load(Ordering::Relaxed) {
+            if should_cancel.load(Ordering::Acquire) {
                  let _ = self.app.emit("chat:cancelled", serde_json::json!({"stream_id": stream_id}));
                  return Ok(());
             }

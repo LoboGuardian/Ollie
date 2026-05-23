@@ -275,6 +275,18 @@ export const useSettingsStore = create<SettingsState>()(
     }),
     {
       name: 'ollama-gui-settings',
+      // Only persist non-sensitive UI prefs — providers (API keys) stay backend-only
+      partialize: (state) => ({
+        serverUrl: state.serverUrl,
+        serverPort: state.serverPort,
+        defaultModel: state.defaultModel,
+        systemPrompt: state.systemPrompt,
+        defaultParams: state.defaultParams,
+        theme: state.theme,
+        appMode: state.appMode,
+        setupCompleted: state.setupCompleted,
+        activeProviderId: state.activeProviderId,
+      }),
     }
   )
 )

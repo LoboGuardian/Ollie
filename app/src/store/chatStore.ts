@@ -373,10 +373,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
       }
     }
 
-    const cleanup = () => {
+    const cleanup = (discard = false) => {
       if (dripIntervalId) { clearInterval(dripIntervalId); dripIntervalId = null }
-      // Flush any remaining pending text immediately
-      if (pendingText.length > 0) {
+      if (discard) {
+        pendingText = ''
+      } else if (pendingText.length > 0) {
         displayedContent += pendingText
         pendingText = ''
         get().updateStreamingMessage(assistantMessageId, displayedContent)
@@ -413,14 +414,13 @@ export const useChatStore = create<ChatState>((set, get) => ({
         }
       })
 
-      // Listen for cancellation
+      // Listen for cancellation — discard buffered text, don't flush it
       unlistenCancelled = await listen<{ stream_id: string }>('chat:cancelled', (event) => {
         const { stream_id } = event.payload
 
         if (stream_id === currentStreamId) {
-          const currentState = get()
-          currentState.setStreaming(false)
-          cleanup()
+          get().setStreaming(false)
+          cleanup(true)
         }
       })
       // Set up event listeners for streaming
@@ -676,9 +676,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
     let unlistenCancelled: (() => void) | null = null
     let unlistenToolStart: (() => void) | null = null
 
-    const cleanup = () => {
+    const cleanup = (discard = false) => {
       if (dripIntervalId) { clearInterval(dripIntervalId); dripIntervalId = null }
-      if (pendingText.length > 0) {
+      if (discard) {
+        pendingText = ''
+      } else if (pendingText.length > 0) {
         displayedContent += pendingText
         pendingText = ''
         get().updateStreamingMessage(assistantMessageId, displayedContent)
@@ -714,7 +716,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         const { stream_id } = event.payload
         if (stream_id === currentStreamId) {
           get().setStreaming(false)
-          cleanup()
+          cleanup(true)
         }
       })
 
@@ -802,11 +804,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const state = get()
     if (state.isStreaming) {
       try {
-        await invoke('chat_cancel')
-        state.setStreaming(false)
+        await invoke('chat_cancel', { streamId: state.currentStreamId })
+        // Don't call setStreaming(false) here — chat:cancelled event does it
+        // and also discards buffered drip text. Calling it here would null
+        // currentStreamId before the event fires, breaking the stream_id filter.
       } catch (error) {
         console.error('Failed to stop streaming:', error)
-        // Force stop anyway
         state.setStreaming(false)
       }
     }
