@@ -105,18 +105,14 @@ export default function MainPanel({ isZenMode = false }: { isZenMode?: boolean }
   const handleSendMessage = async () => {
     if ((!message.trim() && attachments.length === 0) || isStreaming || !currentModel) return
 
-    let finalContent = message.trim()
+    const finalContent = message.trim()
     const images: string[] = []
+    const files: { name: string; content: string }[] = []
 
-    // Process attachments
     for (const att of attachments) {
       if (att.type === 'file') {
-        const fileContent = `\n\n--- File: ${att.name} ---\n${att.content}\n---------------------\n`
-        finalContent += fileContent
+        files.push({ name: att.name, content: att.content })
       } else if (att.type === 'image') {
-        // Strip the Data URL header mainly for API, but let's see what chatStore expects
-        // Ollie expects base64 string. 
-        // "data:image/png;base64,..." -> split(',')[1]
         const base64 = att.content.split(',')[1]
         if (base64) images.push(base64)
       }
@@ -126,13 +122,15 @@ export default function MainPanel({ isZenMode = false }: { isZenMode?: boolean }
     setAttachments([])
     setShouldAutoScroll(true)
 
-    // Reset textarea height
     const textarea = document.querySelector('textarea')
-    if (textarea) {
-      textarea.style.height = 'auto'
-    }
+    if (textarea) textarea.style.height = 'auto'
 
-    await sendMessage(finalContent, undefined, images.length > 0 ? images : undefined)
+    await sendMessage(
+      finalContent,
+      undefined,
+      images.length > 0 ? images : undefined,
+      files.length > 0 ? files : undefined,
+    )
   }
 
   const handleStopStreaming = async () => {
