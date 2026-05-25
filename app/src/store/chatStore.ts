@@ -18,6 +18,7 @@ export interface ChatMessage {
   role: 'user' | 'assistant' | 'system'
   content: string
   images?: string[]
+  files?: { name: string; content: string }[]
   toolCalls?: ToolCallState[]
   timestamp: number
   isStreaming?: boolean
@@ -54,7 +55,7 @@ interface ChatState {
   updateMessageToolCalls: (id: string, toolCall: ToolCallState) => void
   markToolCallsDone: (id: string) => void
   setStreaming: (isStreaming: boolean, messageId?: string, streamId?: string) => void
-  sendMessage: (content: string, options?: ChatOptions, images?: string[]) => Promise<void>
+  sendMessage: (content: string, options?: ChatOptions, images?: string[], files?: { name: string; content: string }[]) => Promise<void>
   editUserMessage: (messageId: string, newContent: string) => Promise<void>
   stopStreaming: () => void
   clearMessages: () => void
@@ -123,22 +124,22 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const rows = await invoke<DbMessage[]>('db_list_messages', { chatId, limit: 1000 })
       const msgs: ChatMessage[] = rows.map((r) => {
         let images: string[] | undefined
+        let files: { name: string; content: string }[] | undefined
         try {
           if (r.meta_json) {
             const meta = JSON.parse(r.meta_json)
-            if (meta.images && Array.isArray(meta.images)) {
-              images = meta.images
-            }
+            if (meta.images && Array.isArray(meta.images)) images = meta.images
+            if (meta.files && Array.isArray(meta.files)) files = meta.files
           }
         } catch {
           // best-effort: ignore JSON parse errors for meta_json
         }
-
         return {
           id: r.id,
           role: (r.role as 'user' | 'assistant' | 'system'),
           content: r.content,
           images,
+          files,
           timestamp: Number(r.created_at) || Date.now(),
         }
       })
@@ -241,7 +242,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     })
   },
 
-  sendMessage: async (content: string, options?: ChatOptions, images?: string[]) => {
+  sendMessage: async (content: string, options?: ChatOptions, images?: string[], files?: { name: string; content: string }[]) => {
     const state = get()
 
     if (state.isStreaming) {
@@ -268,6 +269,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
       role: 'user',
       content: content.trim(),
       images,
+      files,
     })
     // Persist user message
     const chatId = get().currentChatId
@@ -278,7 +280,12 @@ export const useChatStore = create<ChatState>((set, get) => ({
           invoke('db_set_chat_model', { chatId, model: state.currentModel }).catch(() => { })
         }
 
-        const metaJson = images && images.length > 0 ? JSON.stringify({ images }) : null
+        const metaJson = (images?.length || files?.length)
+          ? JSON.stringify({
+              ...(images?.length ? { images } : {}),
+              ...(files?.length ? { files } : {}),
+            })
+          : null
         await invoke('db_append_message', { chatId, role: 'user', content: content.trim(), metaJson })
         // Inform listeners (Sidebar) to refresh chats ordering
         window.dispatchEvent(new CustomEvent('chats-refresh'))
@@ -499,11 +506,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const latest = get()
       const apiMessages = latest.messages
         .filter(msg => msg.role !== 'assistant' || msg.content.trim() !== '')
-        .map(msg => ({
-          role: msg.role,
-          content: msg.content,
-          images: msg.images,
-        }))
+        .map(msg => {
+          let llmContent = msg.content
+          if (msg.files && msg.files.length > 0) {
+            const fileBlocks = msg.files
+              .map(f => `\n\n--- File: ${f.name} ---\n${f.content}\n---`)
+              .join('')
+            llmContent = llmContent + fileBlocks
+          }
+          return { role: msg.role, content: llmContent, images: msg.images }
+        })
 
       // Inject system prompt if it exists
       const freshState = get()
@@ -770,7 +782,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
       const latest = get()
       const apiMessages = latest.messages
         .filter(msg => msg.role !== 'assistant' || msg.content.trim() !== '')
-        .map(msg => ({ role: msg.role, content: msg.content, images: msg.images }))
+        .map(msg => {
+          let llmContent = msg.content
+          if (msg.files && msg.files.length > 0) {
+            const fileBlocks = msg.files
+              .map(f => `\n\n--- File: ${f.name} ---\n${f.content}\n---`)
+              .join('')
+            llmContent = llmContent + fileBlocks
+          }
+          return { role: msg.role, content: llmContent, images: msg.images }
+        })
 
       if (latest.currentSystemPrompt) {
         apiMessages.unshift({ role: 'system', content: latest.currentSystemPrompt, images: undefined })
