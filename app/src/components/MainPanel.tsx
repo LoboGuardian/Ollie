@@ -1,8 +1,9 @@
-import { ArrowUp, Square, ArrowDown, Paperclip, X, FileText, Search, Brain, Minimize2 } from 'lucide-react'
+import { ArrowUp, Square, ArrowDown, Paperclip, X, FileText, Search, Brain, Minimize2, Download } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { useChatStore } from '../store/chatStore'
 import Message from './Message'
 import { extractPdfText } from '../lib/pdf'
+import { exportChatAsMarkdown } from '../lib/export'
 import { useUIStore } from '../store/uiStore'
 
 export default function MainPanel({ isZenMode = false }: { isZenMode?: boolean }) {
@@ -152,17 +153,39 @@ export default function MainPanel({ isZenMode = false }: { isZenMode?: boolean }
   }
 
   const hasMessages = messages.length > 0
+  const exportTitle = messages.find(m => m.role === 'user')?.content.slice(0, 60) ?? 'chat'
 
   return (
     <div className={`flex-1 flex flex-col min-h-0 overflow-hidden relative ${isZenMode ? 'bg-gray-50 dark:bg-gray-950' : 'bg-white dark:bg-gray-900'}`}>
       {isZenMode && (
-        <div className="absolute top-4 right-4 z-20">
+        <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
+          {hasMessages && (
+            <button
+              onClick={() => exportChatAsMarkdown(exportTitle, currentModel, messages)}
+              className="ui-surface ui-muted hover:text-gray-900 dark:hover:text-gray-100 rounded-xl p-2 shadow-sm transition-all"
+              title="Export chat as Markdown"
+            >
+              <Download size={16} />
+            </button>
+          )}
           <button
             onClick={() => setZenMode(false)}
             className="ui-surface ui-muted hover:text-gray-900 dark:hover:text-gray-100 rounded-xl p-2 shadow-sm transition-all"
             title="Exit zen mode"
           >
             <Minimize2 size={16} />
+          </button>
+        </div>
+      )}
+
+      {!isZenMode && hasMessages && (
+        <div className="absolute top-4 right-4 z-20">
+          <button
+            onClick={() => exportChatAsMarkdown(exportTitle, currentModel, messages)}
+            className="p-1.5 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all"
+            title="Export chat as Markdown"
+          >
+            <Download size={15} />
           </button>
         </div>
       )}
