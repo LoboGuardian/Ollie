@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 
 interface ShortcutHandlers {
   onNewChat: () => void
@@ -8,6 +8,11 @@ interface ShortcutHandlers {
 }
 
 export function useKeyboardShortcuts(handlers: ShortcutHandlers) {
+  const handlersRef = useRef(handlers)
+  useEffect(() => {
+    handlersRef.current = handlers
+  })
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const ctrl = e.ctrlKey || e.metaKey
@@ -18,27 +23,27 @@ export function useKeyboardShortcuts(handlers: ShortcutHandlers) {
 
       if (e.key === 'n' && !inInput) {
         e.preventDefault()
-        handlers.onNewChat()
+        handlersRef.current.onNewChat()
         return
       }
       if (e.key === 'k' && !inInput) {
         e.preventDefault()
-        handlers.onFocusModelPicker()
+        handlersRef.current.onFocusModelPicker()
         return
       }
       if (e.key === '/') {
         e.preventDefault()
-        handlers.onFocusInput()
+        handlersRef.current.onFocusInput()
         return
       }
       if (e.key === 'b') {
         e.preventDefault()
-        handlers.onToggleSidebar()
+        handlersRef.current.onToggleSidebar()
         return
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [handlers])
+  }, [])
 }
