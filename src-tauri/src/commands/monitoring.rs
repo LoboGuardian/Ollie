@@ -1,6 +1,6 @@
 use tauri::{AppHandle, Emitter};
 use serde::{Deserialize, Serialize};
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::Ordering;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tokio::time;
 use sysinfo::{Disks, Networks, System};
@@ -44,33 +44,30 @@ pub struct OllamaStatus {
     pub last_health_check: u64,
 }
 
-// Global monitoring state
-static MONITORING_ACTIVE: AtomicBool = AtomicBool::new(false);
-
 // Start system monitoring
 // Accept both snake_case (interval_ms) and camelCase (intervalMs) for convenience
 #[tauri::command]
 pub async fn start_system_monitoring(
     app: AppHandle,
+    monitoring: tauri::State<'_, crate::MonitoringState>,
     interval_ms: Option<u64>,
     #[allow(non_snake_case)] intervalMs: Option<u64>,
 ) -> Result<(), String> {
-    if MONITORING_ACTIVE.load(Ordering::Relaxed) {
-        return Ok(()); // Already monitoring
+    if monitoring.0.load(Ordering::Relaxed) {
+        return Ok(());
     }
-    
-    MONITORING_ACTIVE.store(true, Ordering::Relaxed);
-    // Determine the interval from provided args, default to 2000ms
+
+    monitoring.0.store(true, Ordering::Relaxed);
+    let flag = monitoring.0.clone();
     let chosen_interval = interval_ms.or(intervalMs).unwrap_or(2000);
-    
-    // Spawn monitoring task
+
     tokio::spawn(async move {
         let mut system = System::new_all();
         let mut disks = Disks::new_with_refreshed_list();
         let mut networks = Networks::new_with_refreshed_list();
         let mut interval = time::interval(Duration::from_millis(chosen_interval));
 
-        while MONITORING_ACTIVE.load(Ordering::Relaxed) {
+        while flag.load(Ordering::Relaxed) {
             interval.tick().await;
 
             system.refresh_all();
@@ -102,8 +99,8 @@ pub async fn start_system_monitoring(
 
 // Stop system monitoring
 #[tauri::command]
-pub async fn stop_system_monitoring() -> Result<(), String> {
-    MONITORING_ACTIVE.store(false, Ordering::Relaxed);
+pub async fn stop_system_monitoring(monitoring: tauri::State<'_, crate::MonitoringState>) -> Result<(), String> {
+    monitoring.0.store(false, Ordering::Relaxed);
     Ok(())
 }
 

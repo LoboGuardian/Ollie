@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::{AppHandle, Emitter};
 use futures::StreamExt;
@@ -12,11 +12,16 @@ use crate::mcp::McpClient;
 pub struct ChatOrchestrator {
     app: AppHandle,
     provider: Box<dyn LLMProvider + Send + Sync>,
+    mcp_clients: Arc<Mutex<HashMap<String, Arc<McpClient>>>>,
 }
 
 impl ChatOrchestrator {
-    pub fn new(app: AppHandle, provider: Box<dyn LLMProvider + Send + Sync>) -> Self {
-        Self { app, provider }
+    pub fn new(
+        app: AppHandle,
+        provider: Box<dyn LLMProvider + Send + Sync>,
+        mcp_clients: Arc<Mutex<HashMap<String, Arc<McpClient>>>>,
+    ) -> Self {
+        Self { app, provider, mcp_clients }
     }
 
     pub async fn run_conversation(
@@ -136,7 +141,9 @@ impl ChatOrchestrator {
                      }));
                      
                      if let Some(client_name) = tool_mapping.get(name) {
-                         if let Some(mcp_client) = McpClient::get_client(client_name) {
+                         let mcp_client = self.mcp_clients.lock().ok()
+                             .and_then(|map| map.get(client_name).cloned());
+                         if let Some(mcp_client) = mcp_client {
                              println!("Executing tool {} on client {}", name, client_name);
                              
                              let result_content = match mcp_client.call_tool(name, args).await {
@@ -215,28 +222,27 @@ impl ChatOrchestrator {
     async fn gather_tools(&self) -> (Option<Vec<Value>>, HashMap<String, String>) {
         let mut available_tools = Vec::new();
         let mut tool_mapping = HashMap::new();
-        
-        let active_clients = McpClient::list_active_clients();
-        for client_name in &active_clients {
-            if let Some(mcp_client) = McpClient::get_client(client_name) {
-                if let Ok(tools) = mcp_client.list_tools().await {
-                    for tool in tools {
-                        let mut schema = tool.input_schema.clone();
-                        if let serde_json::Value::Object(ref mut map) = schema {
-                            map.remove("$schema");
-                        }
-                        
-                        available_tools.push(serde_json::json!({
-                            "type": "function",
-                            "function": {
-                                "name": tool.name,
-                                "description": tool.description,
-                                "parameters": schema
-                            }
-                        }));
-                        
-                        tool_mapping.insert(tool.name.clone(), client_name.clone());
+
+        let client_refs: Vec<(String, Arc<McpClient>)> = self.mcp_clients.lock().ok()
+            .map(|map| map.iter().map(|(k, v)| (k.clone(), v.clone())).collect())
+            .unwrap_or_default();
+
+        for (client_name, mcp_client) in &client_refs {
+            if let Ok(tools) = mcp_client.list_tools().await {
+                for tool in tools {
+                    let mut schema = tool.input_schema.clone();
+                    if let serde_json::Value::Object(ref mut map) = schema {
+                        map.remove("$schema");
                     }
+                    available_tools.push(serde_json::json!({
+                        "type": "function",
+                        "function": {
+                            "name": tool.name,
+                            "description": tool.description,
+                            "parameters": schema
+                        }
+                    }));
+                    tool_mapping.insert(tool.name.clone(), client_name.clone());
                 }
             }
         }

@@ -1,8 +1,6 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::Mutex;
-use std::sync::atomic::{AtomicBool};
+use std::sync::atomic::AtomicBool;
 use uuid::Uuid;
 use crate::commands::settings::{settings_get, provider_get_active};
 use crate::providers::{ProviderType, ChatMessage as ProviderChatMessage, ChatOptions as ProviderChatOptions};
@@ -43,17 +41,14 @@ pub struct ChatResponse {
     pub error: Option<String>,
 }
 
-// Global state to track active streams
-lazy_static::lazy_static! {
-    static ref ACTIVE_STREAMS: Arc<Mutex<HashMap<String, Arc<AtomicBool>>>> = Arc::new(Mutex::new(HashMap::new()));
-}
-
 #[tauri::command]
 pub async fn chat_stream(
     app: tauri::AppHandle,
     request: ChatRequest,
-    _server_url: Option<String>, // Deprecated/Unused? ProviderConfig handles URL.
+    _server_url: Option<String>,
     provider_id: Option<String>,
+    streams: tauri::State<'_, crate::AppStreams>,
+    mcp_clients: tauri::State<'_, crate::McpClients>,
 ) -> Result<ChatResponse, String> {
     
     // 1. Resolve Provider Configuration
@@ -80,7 +75,7 @@ pub async fn chat_stream(
     let stream_id = Uuid::new_v4().to_string();
     let should_cancel = Arc::new(AtomicBool::new(false));
     {
-        let mut active_streams = ACTIVE_STREAMS.lock().await;
+        let mut active_streams = streams.0.lock().await;
         active_streams.insert(stream_id.clone(), should_cancel.clone());
     }
 
@@ -110,7 +105,7 @@ pub async fn chat_stream(
     });
 
     // 5. Initialize Orchestrator
-    let orchestrator = ChatOrchestrator::new(app.clone(), provider);
+    let orchestrator = ChatOrchestrator::new(app.clone(), provider, mcp_clients.0.clone());
 
     // 6. Run Conversation Loop
     let result = orchestrator.run_conversation(
@@ -124,7 +119,7 @@ pub async fn chat_stream(
 
     // 7. Cleanup
     {
-        let mut active_streams = ACTIVE_STREAMS.lock().await;
+        let mut active_streams = streams.0.lock().await;
         active_streams.remove(&stream_id);
     }
 
@@ -138,8 +133,11 @@ pub async fn chat_stream(
 }
 
 #[tauri::command]
-pub async fn chat_cancel(stream_id: Option<String>) -> Result<(), String> {
-    let active_streams = ACTIVE_STREAMS.lock().await;
+pub async fn chat_cancel(
+    stream_id: Option<String>,
+    streams: tauri::State<'_, crate::AppStreams>,
+) -> Result<(), String> {
+    let active_streams = streams.0.lock().await;
     match stream_id {
         Some(sid) => {
             if let Some(should_cancel) = active_streams.get(&sid) {

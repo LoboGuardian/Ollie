@@ -3,6 +3,26 @@ mod db;
 mod mcp;
 mod providers;
 
+use tauri::Manager;
+
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
+use std::sync::atomic::AtomicBool;
+use tokio::sync::Mutex as TokioMutex;
+
+pub struct AppStreams(pub Arc<TokioMutex<HashMap<String, Arc<AtomicBool>>>>);
+pub struct MonitoringState(pub Arc<AtomicBool>);
+pub struct McpClients(pub Arc<Mutex<HashMap<String, Arc<mcp::McpClient>>>>);
+
+impl Default for AppStreams {
+    fn default() -> Self { Self(Arc::new(TokioMutex::new(HashMap::new()))) }
+}
+impl Default for MonitoringState {
+    fn default() -> Self { Self(Arc::new(AtomicBool::new(false))) }
+}
+impl Default for McpClients {
+    fn default() -> Self { Self(Arc::new(Mutex::new(HashMap::new()))) }
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -53,6 +73,9 @@ pub fn run() {
       commands::settings::provider_get_active
     ])
     .setup(|app| {
+      app.manage(AppStreams::default());
+      app.manage(MonitoringState::default());
+      app.manage(McpClients::default());
       if cfg!(debug_assertions) {
         app.handle().plugin(
           tauri_plugin_log::Builder::default()

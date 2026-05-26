@@ -1,19 +1,13 @@
 use std::sync::{Arc, Mutex};
-use std::collections::HashMap;
 use std::time::Duration;
 use anyhow::Result;
 use serde_json::Value;
 use crate::mcp::protocol::{JsonRpcRequest, JsonRpcResponse, Tool, ListToolsResult, CallToolRequest, CallToolResult};
 use crate::mcp::transport::{Transport, StdioTransport, SseTransport};
-use lazy_static::lazy_static;
 use tokio::sync::Mutex as TokioMutex;
 
 pub mod protocol;
 pub mod transport;
-
-lazy_static! {
-    static ref ACTIVE_MCP_CLIENTS: Arc<Mutex<HashMap<String, Arc<McpClient>>>> = Arc::new(Mutex::new(HashMap::new()));
-}
 
 pub struct McpClient {
     transport: Arc<TokioMutex<Transport>>,
@@ -21,43 +15,23 @@ pub struct McpClient {
 }
 
 impl McpClient {
-    pub async fn connect(name: &str, command: &str, args: &[String]) -> Result<Arc<Self>> {
+    pub async fn connect(command: &str, args: &[String]) -> Result<Arc<Self>> {
         let transport = StdioTransport::new(command, args)?;
-        
         let client = Arc::new(Self {
             transport: Arc::new(TokioMutex::new(Transport::Stdio(transport))),
             next_id: Arc::new(Mutex::new(1)),
         });
-
         Self::initialize(&client).await?;
-
-        // Register in global map
-        {
-            if let Ok(mut clients) = ACTIVE_MCP_CLIENTS.lock() {
-                clients.insert(name.to_string(), client.clone());
-            }
-        }
-
         Ok(client)
     }
 
-    pub async fn connect_http(name: &str, url: &str, auth_token: Option<String>) -> Result<Arc<Self>> {
+    pub async fn connect_http(url: &str, auth_token: Option<String>) -> Result<Arc<Self>> {
         let transport = SseTransport::new(url, auth_token)?;
-
         let client = Arc::new(Self {
             transport: Arc::new(TokioMutex::new(Transport::Sse(transport))),
             next_id: Arc::new(Mutex::new(1)),
         });
-
         Self::initialize(&client).await?;
-
-        // Register in global map
-        {
-            if let Ok(mut clients) = ACTIVE_MCP_CLIENTS.lock() {
-                clients.insert(name.to_string(), client.clone());
-            }
-        }
-
         Ok(client)
     }
 
@@ -77,16 +51,6 @@ impl McpClient {
         let _init_result: Value = client.send_request("initialize", Some(init_params)).await?;
         client.send_notification("notifications/initialized", None).await?;
         Ok(())
-    }
-
-    pub fn get_client(name: &str) -> Option<Arc<McpClient>> {
-        ACTIVE_MCP_CLIENTS.lock().ok()?.get(name).cloned()
-    }
-
-    pub fn list_active_clients() -> Vec<String> {
-        ACTIVE_MCP_CLIENTS.lock().ok()
-            .map(|clients| clients.keys().cloned().collect())
-            .unwrap_or_default()
     }
 
     async fn send_request(&self, method: &str, params: Option<Value>) -> Result<Value> {
